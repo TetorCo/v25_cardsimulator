@@ -232,6 +232,8 @@ class DOMManager {
         const playerName = document.getElementById(`player-name-${cardId}`).value;
         const team = document.getElementById(`team-${cardId}`).value;
         const year = document.getElementById(`year-${cardId}`).value;
+        const position = document.getElementById(`position-${cardId}`).value;
+        const isPitcher = ['SP', 'RP', 'CP'].includes(position);
         const baseStats = {};
         const trainingDistribution = {};
 
