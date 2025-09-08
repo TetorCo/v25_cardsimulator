@@ -1,19 +1,63 @@
 // 컴투스프로야구V25 카드 성장 시뮬레이터 - DOM 관리
 // UI 요소 생성, 업데이트, 이벤트 처리를 담당하는 모듈
 
+const GRADES = ['라이브', '라이브 올스타', '시즌', '임팩트', '시그니처', '골든글러브', '국가대표'];
+const POSITIONS = {
+    'IF': '내야수',
+    'OF': '외야수',
+    'C': '포수',
+    'DH': '지명타자',
+    'SP': '선발투수',
+    'RP': '중계투수',
+    'CP': '마무리투수'
+};
+
 class DOMManager {
     constructor() {
         this.currentCardCount = 1;
         this.maxCards = MAX_CARDS;
-        this.init();
+        this.selectedTeam = null; // 전역 선택 팀
+        this.selectedYear = null; // 전역 선택 연도
+        this.activeModalTargetCardId = null; // 모달 호출 카드 ID
     }
 
     // 초기화
     init() {
-
+        this.populateTeamButtons();
+        this.populateYearButtons();
+        this.populateGradeButtons();
+        this.populatePositionButtons();
     }
 
-    
+    openTeamModalForCard(cardId) {
+        this.activeModalTargetCardId = cardId;
+        this.openModal('team-selection-modal');
+    }
+
+    openYearModalForCard(cardId) {
+        this.activeModalTargetCardId = cardId;
+        this.openModal('year-selection-modal');
+    }
+
+    openTeamModalForGlobal() {
+        this.activeModalTargetCardId = null;
+        this.openModal('team-selection-modal');
+    }
+
+    openYearModalForGlobal() {
+        this.activeModalTargetCardId = null;
+        this.openModal('year-selection-modal');
+    }
+
+    openGradeModalForCard(cardId) {
+        this.activeModalTargetCardId = cardId;
+        this.openModal('grade-selection-modal');
+    }
+
+    openPositionModalForCard(cardId) {
+        this.activeModalTargetCardId = cardId;
+        this.openModal('position-selection-modal');
+    }
 
     // 특정 카드의 모든 이벤트 리스너 설정
     setupCardEventListeners(cardId) {
@@ -27,15 +71,6 @@ class DOMManager {
         const starSelect = document.getElementById(`star-rating-${cardId}`);
         if (starSelect) {
             starSelect.addEventListener('change', () => this.updateCardData(cardId));
-        }
-
-        // 포지션 변경 리스너
-        const positionSelect = document.getElementById(`position-${cardId}`);
-        if (positionSelect) {
-            positionSelect.addEventListener('change', () => {
-                this.togglePositionStats(cardId);
-                this.updateCardData(cardId);
-            });
         }
 
         // 기본 정보 입력 리스너 (선수명, 팀, 연도)
@@ -139,9 +174,10 @@ class DOMManager {
     }
 
     // 포지션에 따른 스탯 표시 전환
+    // 포지션에 따른 스탯 표시 전환
     togglePositionStats(cardId) {
         const position = document.getElementById(`position-${cardId}`).value;
-        const isPitcher = position === 'P';
+        const isPitcher = ['SP', 'RP', 'CP'].includes(position);
         
         const batterStats = document.getElementById(`batter-stats-${cardId}`);
         const pitcherStats = document.getElementById(`pitcher-stats-${cardId}`);
@@ -196,9 +232,6 @@ class DOMManager {
         const playerName = document.getElementById(`player-name-${cardId}`).value;
         const team = document.getElementById(`team-${cardId}`).value;
         const year = document.getElementById(`year-${cardId}`).value;
-        const position = document.getElementById(`position-${cardId}`).value;
-
-        const isPitcher = position === 'P';
         const baseStats = {};
         const trainingDistribution = {};
 
@@ -267,7 +300,6 @@ class DOMManager {
         this.updateAddCardButton();
     }
 
-    // 카드 슬롯 HTML 생성
     generateCardSlotHTML(cardId) {
         // Helper function to generate stat input fields
         const generateStatInputs = (id, stats, labels, prefix = '') => {
@@ -286,11 +318,35 @@ class DOMManager {
                     <h4 class="text-lg font-medium mb-3">선수 정보</h4>
                     <div class="grid grid-cols-3 gap-3">
                         <div><label class="block text-sm text-secondary mb-1">선수명</label><input type="text" id="player-name-${cardId}" class="input-field w-full" placeholder="예: 이정후"></div>
-                        <div><label class="block text-sm text-secondary mb-1">팀</label><select id="team-${cardId}" class="input-field w-full"><option value="">팀 선택</option>${TEAMS.map(team => `<option value="${team}">${team}</option>`).join('')}</select></div>
-                        <div><label class="block text-sm text-secondary mb-1">연도</label><select id="year-${cardId}" class="input-field w-full"><option value="">연도 선택</option>${YEARS.map(year => `<option value="${year}">${year}</option>`).join('')}</select></div>
-                        <div><label class="block text-sm text-secondary mb-1">종류</label><select id="grade-${cardId}" class="input-field w-full"><option value="">종류 선택</option><option value="라이브">라이브</option><option value="라이브 올스타">라이브 올스타</option><option value="시즌">시즌</option><option value="임팩트">임팩트</option><option value="시그니처">시그니처</option><option value="골든글러브">골든글러브</option><option value="국가대표">국가대표</option></select></div>
+                        <div>
+                            <label class="block text-sm text-secondary mb-1">팀</label>
+                            <button onclick="domManager.openTeamModalForCard(${cardId})" class="input-field w-full text-left h-[42px]">
+                                <span id="team-display-${cardId}">팀 선택</span>
+                            </button>
+                            <input type="hidden" id="team-${cardId}" value="">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-secondary mb-1">연도</label>
+                            <button onclick="domManager.openYearModalForCard(${cardId})" class="input-field w-full text-left h-[42px]">
+                                <span id="year-display-${cardId}">연도 선택</span>
+                            </button>
+                            <input type="hidden" id="year-${cardId}" value="">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-secondary mb-1">종류</label>
+                            <button onclick="domManager.openGradeModalForCard(${cardId})" class="input-field w-full text-left h-[42px]">
+                                <span id="grade-display-${cardId}">종류 선택</span>
+                            </button>
+                            <input type="hidden" id="grade-${cardId}" value="">
+                        </div>
                         <div id="star-rating-container-${cardId}"><label class="block text-sm text-secondary mb-1">등급</label><select id="star-rating-${cardId}" class="input-field w-full"></select></div>
-                        <div><label class="block text-sm text-secondary mb-1">포지션</label><select id="position-${cardId}" class="input-field w-full"><option value="">포지션 선택</option><option value="1B">1루수</option><option value="2B">2루수</option><option value="3B">3루수</option><option value="SS">유격수</option><option value="LF">좌익수</option><option value="CF">중견수</option><option value="RF">우익수</option><option value="C">포수</option><option value="P">투수</option></select></div>
+                        <div>
+                            <label class="block text-sm text-secondary mb-1">포지션</label>
+                            <button onclick="domManager.openPositionModalForCard(${cardId})" class="input-field w-full text-left h-[42px]">
+                                <span id="position-display-${cardId}">포지션 선택</span>
+                            </button>
+                            <input type="hidden" id="position-${cardId}" value="">
+                        </div>
                     </div>
                 </div>
 
@@ -375,7 +431,7 @@ class DOMManager {
         const tableBody = document.getElementById('comparison-table-body');
         let html = '';
         // Determine if any active card is a pitcher to adjust table headers
-        const hasPitcher = activeCards.some(card => card.playerInfo.position === 'P');
+                const hasPitcher = activeCards.some(card => ['SP', 'RP', 'CP'].includes(card.playerInfo.position));
 
         let statHeaders = ['파워', '정확', '선구', '주루', '인내', '수비'];
         if (hasPitcher) {
@@ -392,7 +448,7 @@ class DOMManager {
 
 
         activeCards.forEach(card => {
-            const isPitcher = card.playerInfo.position === 'P';
+            const isPitcher = ['SP', 'RP', 'CP'].includes(card.playerInfo.position);
             const stats = isPitcher ? ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'] : ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'];
             html += `<tr class="border-b border-gray-600"><td class="py-3 px-4 font-semibold">${card.playerInfo.name}</td>`;
             stats.forEach(stat => {
@@ -408,30 +464,38 @@ class DOMManager {
     // 카드 리셋
     resetCard(cardId) {
         const cardSlot = document.getElementById(`card-slot-${cardId}`);
-        const inputs = cardSlot.querySelectorAll('input, select');
+        
+        // Reset text and number inputs
+        const inputs = cardSlot.querySelectorAll('input[type="text"], input[type="number"]');
         inputs.forEach(input => {
-            if (input.type === 'select-one') {
-                input.selectedIndex = 0;
-            } else if (input.type !== 'hidden') {
-                input.value = input.id.includes('training') ? '0' : '';
-            }
+            input.value = input.id.includes('training') ? '0' : '';
         });
+
+        // Reset select dropdowns
+        const selects = cardSlot.querySelectorAll('select');
+        selects.forEach(select => {
+            select.selectedIndex = 0;
+        });
+
+        // Reset team and year buttons/hidden inputs
+        document.getElementById(`team-display-${cardId}`).textContent = '팀 선택';
+        document.getElementById(`team-${cardId}`).value = '';
+        document.getElementById(`year-display-${cardId}`).textContent = '연도 선택';
+        document.getElementById(`year-${cardId}`).value = '';
+        document.getElementById(`grade-display-${cardId}`).textContent = '종류 선택';
+        document.getElementById(`grade-${cardId}`).value = '';
+        document.getElementById(`position-display-${cardId}`).textContent = '포지션 선택';
+        document.getElementById(`position-${cardId}`).value = '';
+
+        // Reset enhancement level
         document.getElementById(`enhancement-level-${cardId}`).value = '0';
         const enhancementButtons = cardSlot.querySelectorAll('.enhancement-btn');
         enhancementButtons.forEach(btn => btn.classList.remove('active'));
         cardSlot.querySelector(`.enhancement-btn[data-level="0"]`).classList.add('active');
+
+        // Trigger updates
         this.handleGradeChange(cardId);
         this.updateCardData(cardId);
-    }
-
-    // 전역 세트덱 상태 반환
-    getGlobalSetDeckState() {
-        return {
-            selectedTeam: this.selectedTeam,
-            selectedYear: this.selectedYear,
-            setDeckScore: this.setDeckScore, // 이 값은 현재 DOMManager에서 계산되지 않음.
-            selectedTierOptions: this.selectedTierOptions
-        };
     }
 
     // 모달 열기
@@ -444,6 +508,56 @@ class DOMManager {
         document.getElementById(modalId).classList.add('hidden');
     }
 
+    // 전역 세트덱 상태 반환
+    getGlobalSetDeckState() {
+        return {
+            selectedTeam: this.selectedTeam,
+            selectedYear: this.selectedYear,
+            setDeckScore: this.setDeckScore, // 이 값은 현재 DOMManager에서 계산되지 않음.
+            selectedTierOptions: this.selectedTierOptions
+        };
+    }
+
+    populateGradeButtons() {
+        const container = document.getElementById('grade-buttons-container');
+        container.innerHTML = '';
+        GRADES.forEach(grade => {
+            const button = document.createElement('button');
+            button.textContent = grade;
+            button.classList.add('btn-secondary', 'text-sm', 'px-3', 'py-1');
+            button.addEventListener('click', () => {
+                const targetCardId = this.activeModalTargetCardId;
+                if (targetCardId !== null) {
+                    document.getElementById(`grade-display-${targetCardId}`).textContent = grade;
+                    document.getElementById(`grade-${targetCardId}`).value = grade;
+                    this.handleGradeChange(targetCardId);
+                }
+                this.closeModal('grade-selection-modal');
+            });
+            container.appendChild(button);
+        });
+    }
+
+    populatePositionButtons() {
+        const container = document.getElementById('position-buttons-container');
+        container.innerHTML = '';
+        Object.entries(POSITIONS).forEach(([value, label]) => {
+            const button = document.createElement('button');
+            button.textContent = label;
+            button.classList.add('btn-secondary', 'text-sm', 'px-3', 'py-1');
+            button.addEventListener('click', () => {
+                const targetCardId = this.activeModalTargetCardId;
+                if (targetCardId !== null) {
+                    document.getElementById(`position-display-${targetCardId}`).textContent = label;
+                    document.getElementById(`position-${targetCardId}`).value = value;
+                    this.updateCardData(targetCardId);
+                }
+                this.closeModal('position-selection-modal');
+            });
+            container.appendChild(button);
+        });
+    }
+
     // 팀 버튼 채우기 (모달용)
     populateTeamButtons() {
         const container = document.getElementById('team-buttons-container');
@@ -453,10 +567,19 @@ class DOMManager {
             button.textContent = team;
             button.classList.add('btn-secondary', 'text-sm', 'px-3', 'py-1');
             button.addEventListener('click', () => {
-                this.selectedTeam = team;
-                document.getElementById('selected-team-display').textContent = team;
+                const targetCardId = this.activeModalTargetCardId;
+                if (targetCardId !== null) {
+                    // 개별 카드 업데이트
+                    document.getElementById(`team-display-${targetCardId}`).textContent = team;
+                    document.getElementById(`team-${targetCardId}`).value = team;
+                    this.updateCardData(targetCardId);
+                } else {
+                    // 전역 세트덱 업데이트
+                    this.selectedTeam = team;
+                    document.getElementById('selected-team-display').textContent = team;
+                    this.updateAllCards();
+                }
                 this.closeModal('team-selection-modal');
-                this.updateAllCards(); // 모든 카드 데이터 업데이트
             });
             container.appendChild(button);
         });
@@ -471,10 +594,19 @@ class DOMManager {
             button.textContent = year;
             button.classList.add('btn-secondary', 'text-sm', 'px-3', 'py-1');
             button.addEventListener('click', () => {
-                this.selectedYear = year;
-                document.getElementById('selected-year-display').textContent = year;
+                const targetCardId = this.activeModalTargetCardId;
+                if (targetCardId !== null) {
+                    // 개별 카드 업데이트
+                    document.getElementById(`year-display-${targetCardId}`).textContent = year;
+                    document.getElementById(`year-${targetCardId}`).value = year;
+                    this.updateCardData(targetCardId);
+                } else {
+                    // 전역 세트덱 업데이트
+                    this.selectedYear = year;
+                    document.getElementById('selected-year-display').textContent = year;
+                    this.updateAllCards();
+                }
                 this.closeModal('year-selection-modal');
-                this.updateAllCards(); // 모든 카드 데이터 업데이트
             });
             container.appendChild(button);
         });

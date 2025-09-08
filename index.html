@@ -195,6 +195,25 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Global Settings Section -->
+        <section id="global-settings-section" class="mb-12">
+            <h2 class="text-3xl font-bold mb-8 text-center">세트덱 설정</h2>
+            <div class="card-bg rounded-lg p-6 flex justify-center items-center space-x-4">
+                <div>
+                    <span class="text-secondary mr-2">적용 팀:</span>
+                    <button id="team-selection-btn" onclick="domManager.openTeamModalForGlobal()" class="btn-secondary px-4 py-2">
+                        <span id="selected-team-display">미선택</span>
+                    </button>
+                </div>
+                <div>
+                    <span class="text-secondary mr-2">적용 연도:</span>
+                    <button id="year-selection-btn" onclick="domManager.openYearModalForGlobal()" class="btn-secondary px-4 py-2">
+                        <span id="selected-year-display">미선택</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
         <!-- Simulator Section -->
         <section id="simulator-section" class="mb-12">
             <h2 class="text-3xl font-bold mb-8 text-center">카드 시뮬레이터</h2>
@@ -250,6 +269,50 @@
         </section>
 
         
+        <!-- Modals -->
+        <!-- Team Selection Modal -->
+        <div id="team-selection-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4">팀 선택</h3>
+                <div id="team-buttons-container" class="grid grid-cols-5 gap-2">
+                    <!-- Team buttons will be dynamically loaded here -->
+                </div>
+                <button class="btn-primary mt-4" onclick="domManager.closeModal('team-selection-modal')">닫기</button>
+            </div>
+        </div>
+
+        <!-- Year Selection Modal -->
+        <div id="year-selection-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4">연도 선택</h3>
+                <div id="year-buttons-container" class="grid grid-cols-5 gap-2">
+                    <!-- Year buttons will be dynamically loaded here -->
+                </div>
+                <button class="btn-primary mt-4" onclick="domManager.closeModal('year-selection-modal')">닫기</button>
+            </div>
+        </div>
+
+        <!-- Grade Selection Modal -->
+        <div id="grade-selection-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4">종류 선택</h3>
+                <div id="grade-buttons-container" class="grid grid-cols-3 gap-2">
+                    <!-- Grade buttons will be dynamically loaded here -->
+                </div>
+                <button class="btn-primary mt-4" onclick="domManager.closeModal('grade-selection-modal')">닫기</button>
+            </div>
+        </div>
+
+        <!-- Position Selection Modal -->
+        <div id="position-selection-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4">포지션 선택</h3>
+                <div id="position-buttons-container" class="grid grid-cols-3 gap-2">
+                    <!-- Position buttons will be dynamically loaded here -->
+                </div>
+                <button class="btn-primary mt-4" onclick="domManager.closeModal('position-selection-modal')">닫기</button>
+            </div>
+        </div>
     </main>
 
     <!-- Footer -->
