@@ -198,18 +198,20 @@
         <!-- Global Settings Section -->
         <section id="global-settings-section" class="mb-12">
             <h2 class="text-3xl font-bold mb-8 text-center">세트덱 설정</h2>
-            <div class="card-bg rounded-lg p-6 flex justify-center items-center space-x-4">
-                <div>
-                    <span class="text-secondary mr-2">적용 팀:</span>
-                    <button id="team-selection-btn" onclick="domManager.openTeamModalForGlobal()" class="btn-secondary px-4 py-2">
-                        <span id="selected-team-display">미선택</span>
-                    </button>
+            <div class="card-bg rounded-lg p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">세트덱 스코어 및 옵션</h3>
                 </div>
-                <div>
-                    <span class="text-secondary mr-2">적용 연도:</span>
-                    <button id="year-selection-btn" onclick="domManager.openYearModalForGlobal()" class="btn-secondary px-4 py-2">
-                        <span id="selected-year-display">미선택</span>
-                    </button>
+                <div class="flex justify-center items-center space-x-4 mb-4">
+                    <div>
+                        <span class="text-secondary mr-2">세트덱 스코어:</span>
+                        <button id="set-deck-score-btn" onclick="domManager.openModal('set-deck-score-modal')" class="btn-secondary px-4 py-2">
+                            <span id="selected-set-deck-score-display">0</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="setdeck-score-options-container">
+                    <!-- Set deck score options will be dynamically loaded here by JavaScript -->
                 </div>
             </div>
         </section>
@@ -270,6 +272,19 @@
 
         
         <!-- Modals -->
+        <!-- Set Deck Score Modal -->
+        <div id="set-deck-score-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4">세트덱 스코어 설정</h3>
+                <div class="mb-4">
+                    <label for="set-deck-score-input" class="block text-sm text-secondary mb-1">세트덱 스코어 입력</label>
+                    <input type="number" id="set-deck-score-input" class="input-field w-full" value="0" min="0">
+                </div>
+                <button class="btn-primary mt-4" onclick="domManager.updateSetDeckScore()">적용</button>
+                <button class="btn-secondary mt-4" onclick="domManager.closeModal('set-deck-score-modal')">닫기</button>
+            </div>
+        </div>
+
         <!-- Team Selection Modal -->
         <div id="team-selection-modal" class="modal hidden">
             <div class="modal-content">

@@ -149,11 +149,11 @@ const SET_DECK_TIERS = {
     30: {
         optionA: {
             label: "선택 팀 선수: 모든 능력치 +1",
-            type: 'team', // Requires global team selection
+            type: 'team',
             bonus: { all: 1 }
         },
         optionB: {
-            label: "임팩트 & 국가대표 & 시그니처 & 골든글러브 카드: 모든 능력치 +1",
+            label: "임팩트&국가대표&시그니처&골든글러브 카드: 모든 능력치 +1",
             type: 'grade',
             condition: ['임팩트', '국가대표', '시그니처', '골든글러브'],
             bonus: { all: 1 }
@@ -175,13 +175,13 @@ const SET_DECK_TIERS = {
     },
     50: {
         optionA: {
-            label: "시즌 & 라이브 & 라이브 올스타 카드: 모든 능력치 +1",
+            label: "시즌&라이브&라이브 올스타 카드: 모든 능력치 +1",
             type: 'grade',
             condition: ['시즌', '라이브', '라이브 올스타'],
             bonus: { all: 1 }
         },
         optionB: {
-            label: "임팩트 & 국가대표 & 시그니처 & 골든글러브 카드: 모든 능력치 +1",
+            label: "임팩트&국가대표&시그니처&골든글러브 카드: 모든 능력치 +1",
             type: 'grade',
             condition: ['임팩트', '국가대표', '시그니처', '골든글러브'],
             bonus: { all: 1 }
@@ -215,17 +215,49 @@ const SET_DECK_TIERS = {
             bonus: { all: 1 }
         }
     },
+    65: {
+        optionA: {
+            label: "3성 선수: 모든 능력치 +2",
+            type: 'star_and_position',
+            condition: { star: 3 },
+            bonus: { all: 2 }
+        },
+        optionB: {
+            label: "4성 선수: 타자 - 정확, 인내 +2 / 투수 - 구속, 제구 +2",
+            type: 'star_and_position',
+            condition: { star: 4 },
+            bonus: { 
+                batter: { contact: 2, patience: 2 },
+                pitcher: { velocity: 2, control: 2 }
+            }
+        }
+    },
     70: {
         optionA: {
-            label: "선택 팀 선수: 모든 능력치 +1",
-            type: 'team',
+            label: "선발 투수: 모든 능력치 +1",
+            type: 'pitcher_role',
+            condition: 'starter',
             bonus: { all: 1 }
         },
         optionB: {
-            label: "임팩트 & 국가대표 & 시그니처 & 골든글러브 카드: 모든 능력치 +1",
-            type: 'grade',
-            condition: ['임팩트', '국가대표', '시그니처', '골든글러브'],
-            bonus: { all: 1 }
+            label: "불펜 투수(중간 계투, 마무리): 모든 능력치 +2",
+            type: 'pitcher_role',
+            condition: 'reliever',
+            bonus: { all: 2 }
+        }
+    },
+    75: {
+        optionA: {
+            label: "선택 연도 타자: 파워, 정확 +3",
+            type: 'year_and_position',
+            condition: { position: 'batter' },
+            bonus: { power: 3, contact: 3 }
+        },
+        optionB: {
+            label: "선택 연도 투수: 구위, 제구 +3",
+            type: 'year_and_position',
+            condition: { position: 'pitcher' },
+            bonus: { movement: 3, control: 3 }
         }
     },
     80: {
@@ -242,74 +274,231 @@ const SET_DECK_TIERS = {
             bonus: { all: 1 }
         }
     },
-    90: {
+    85: {
         optionA: {
-            label: "시즌 & 라이브 & 라이브 올스타 카드: 모든 능력치 +1",
-            type: 'grade',
-            condition: ['시즌', '라이브', '라이브 올스타'],
-            bonus: { all: 1 }
+            label: "4성 선수: 타자 - 정확, 선구, 파워 +2 / 투수 - 구위, 변화, 제구 +2",
+            type: 'star_and_position',
+            condition: { star: 4 },
+            bonus: {
+                batter: { contact: 2, discipline: 2, power: 2 },
+                pitcher: { movement: 2, breaking: 2, control: 2 }
+            }
         },
         optionB: {
-            label: "임팩트 & 국가대표 & 시그니처 & 골든글러브 카드: 모든 능력치 +1",
+            label: "5성 선수: 타자 - 파워 +1 / 투수 - 구위 +1",
+            type: 'star_and_position',
+            condition: { star: 5 },
+            bonus: {
+                batter: { power: 1 },
+                pitcher: { movement: 1 }
+            }
+        }
+    },
+    90: {
+        optionA: {
+            label: "선택 팀 선수: 모든 능력치 +2",
+            type: 'team',
+            bonus: { all: 2 }
+        },
+        optionB: {
+            label: "임팩트&국가대표&시그니처&골든글러브 카드: 모든 능력치 +2",
             type: 'grade',
             condition: ['임팩트', '국가대표', '시그니처', '골든글러브'],
-            bonus: { all: 1 }
+            bonus: { all: 2 }
+        }
+    },
+    95: {
+        optionA: {
+            label: "내야수, 포수: 인내, 수비 +2",
+            type: 'position_group',
+            condition: ['1B', '2B', '3B', 'SS', 'C'],
+            bonus: { patience: 2, fielding: 2 }
+        },
+        optionB: {
+            label: "외야수, 지명타자: 선구, 주루 +2",
+            type: 'position_group',
+            condition: ['LF', 'CF', 'RF', 'DH'],
+            bonus: { discipline: 2, speed: 2 }
         }
     },
     100: {
         optionA: {
-            label: "선택 팀 선수: 모든 능력치 +1",
-            type: 'team',
+            label: "타자: 모든 능력치 +1",
+            type: 'position',
+            condition: 'batter',
             bonus: { all: 1 }
         },
         optionB: {
-            label: "선택 연도 선수: 모든 능력치 +1",
-            type: 'year',
+            label: "투수: 모든 능력치 +1",
+            type: 'position',
+            condition: 'pitcher',
             bonus: { all: 1 }
+        }
+    },
+    105: {
+        optionA: {
+            label: "3성 선수: 모든 능력치 +2",
+            type: 'star_and_position',
+            condition: { star: 3 },
+            bonus: { all: 2 }
+        },
+        optionB: {
+            label: "4성 선수: 타자 - 파워, 선구 +2 / 투수 - 구위, 변화 +2",
+            type: 'star_and_position',
+            condition: { star: 4 },
+            bonus: {
+                batter: { power: 2, discipline: 2 },
+                pitcher: { movement: 2, breaking: 2 }
+            }
         }
     },
     110: {
         optionA: {
-            label: "타자: 모든 능력치 +1",
-            type: 'position',
-            condition: 'batter',
+            label: "두산, 롯데, 삼성, SSG, KT 선수: 모든 능력치 +1",
+            type: 'team_group',
+            condition: ['두산', '롯데', '삼성', 'SSG', 'KT'],
             bonus: { all: 1 }
         },
         optionB: {
-            label: "투수: 모든 능력치 +1",
-            type: 'position',
-            condition: 'pitcher',
+            label: "KIA, 한화, LG, NC, 키움 선수: 모든 능력치 +1",
+            type: 'team_group',
+            condition: ['KIA', '한화', 'LG', 'NC', '키움'],
             bonus: { all: 1 }
+        }
+    },
+    115: {
+        optionA: {
+            label: "하위 타선(6~9번 타자): 정확, 주루, 수비 +2",
+            type: 'batting_order',
+            condition: 'lower',
+            bonus: { contact: 2, speed: 2, fielding: 2 }
+        },
+        optionB: {
+            label: "불펜 투수(중간 계투, 마무리): 제구, 구위, 지구력 +2",
+            type: 'pitcher_role',
+            condition: 'reliever',
+            bonus: { control: 2, movement: 2, stamina: 2 }
         }
     },
     120: {
         optionA: {
-            label: "시즌 & 라이브 & 라이브 올스타 카드: 모든 능력치 +1",
-            type: 'grade',
-            condition: ['시즌', '라이브', '라이브 올스타'],
-            bonus: { all: 1 }
+            label: "중심 타선(3~5번 타자): 모든 능력치 +2",
+            type: 'batting_order',
+            condition: 'cleanup',
+            bonus: { all: 2 }
         },
         optionB: {
-            label: "임팩트 & 국가대표 & 시그니처 & 골든글러브 카드: 모든 능력치 +1",
-            type: 'grade',
-            condition: ['임팩트', '국가대표', '시그니처', '골든글러브'],
+            label: "선발 투수: 모든 능력치 +1",
+            type: 'pitcher_role',
+            condition: 'starter',
             bonus: { all: 1 }
+        }
+    },
+    125: {
+        optionA: {
+            label: "4성 선수: 타자 - 정확, 선구, 인내 +2 / 투수 - 구속, 변화, 제구 +2",
+            type: 'star_and_position',
+            condition: { star: 4 },
+            bonus: {
+                batter: { contact: 2, discipline: 2, patience: 2 },
+                pitcher: { velocity: 2, breaking: 2, control: 2 }
+            }
+        },
+        optionB: {
+            label: "5성 선수: 타자 - 인내 +1 / 투수 - 제구 +1",
+            type: 'star_and_position',
+            condition: { star: 5 },
+            bonus: {
+                batter: { patience: 1 },
+                pitcher: { control: 1 }
+            }
         }
     },
     130: {
         optionA: {
-            label: "선택 팀 선수: 모든 능력치 +1",
-            type: 'team',
+            label: "시즌&라이브&라이브 올스타 카드: 모든 능력치 +1",
+            type: 'grade',
+            condition: ['시즌', '라이브', '라이브 올스타'],
             bonus: { all: 1 }
         },
         optionB: {
-            label: "선택 연도 선수: 모든 능력치 +1",
-            type: 'year',
+            label: "임팩트&국가대표&시그니처&골든글러브 카드: 모든 능력치 +1",
+            type: 'grade',
+            condition: ['임팩트', '국가대표', '시그니처', '골든글러브'],
             bonus: { all: 1 }
+        }
+    },
+    135: {
+        optionA: {
+            label: "중심 타선(3~5번 타자): 정확, 주루, 수비 +2",
+            type: 'batting_order',
+            condition: 'cleanup',
+            bonus: { contact: 2, speed: 2, fielding: 2 }
+        },
+        optionB: {
+            label: "선발 투수: 제구, 구위, 지구력 +1",
+            type: 'pitcher_role',
+            condition: 'starter',
+            bonus: { control: 1, movement: 1, stamina: 1 }
         }
     },
     140: {
         optionA: {
+            label: "하위 타선(6~9번 타자): 모든 능력치 +1",
+            type: 'batting_order',
+            condition: 'lower',
+            bonus: { all: 1 }
+        },
+        optionB: {
+            label: "불펜 투수(중간 계투, 마무리): 모든 능력치 +1",
+            type: 'pitcher_role',
+            condition: 'reliever',
+            bonus: { all: 1 }
+        }
+    },
+    145: {
+        optionA: {
+            label: "상위 타선(1~2번 타자): 정확, 주루, 선구 +2",
+            type: 'batting_order',
+            condition: 'leadoff',
+            bonus: { contact: 2, speed: 2, discipline: 2 }
+        },
+        optionB: {
+            label: "선발 투수: 제구, 구위, 지구력 +1",
+            type: 'pitcher_role',
+            condition: 'starter',
+            bonus: { control: 1, movement: 1, stamina: 1 }
+        }
+    },
+    150: {
+        optionA: {
+            label: "선택 팀 선수: 모든 능력치 +2",
+            type: 'team',
+            bonus: { all: 2 }
+        },
+        optionB: {
+            label: "임팩트&국가대표&시그니처&골든글러브 카드: 모든 능력치 +2",
+            type: 'grade',
+            condition: ['임팩트', '국가대표', '시그니처', '골든글러브'],
+            bonus: { all: 2 }
+        }
+    },
+    155: {
+        optionA: {
+            label: "상위 타선(1~2번 타자): 파워, 선구, 인내 +2",
+            type: 'batting_order',
+            condition: 'leadoff',
+            bonus: { power: 2, discipline: 2, patience: 2 }
+        },
+        optionB: {
+            label: "선발 투수: 구속, 변화, 수비 +1",
+            type: 'pitcher_role',
+            condition: 'starter',
+            bonus: { velocity: 1, breaking: 1, fielding: 1 }
+        }
+    },
+    160: {
+        optionA: {
             label: "타자: 모든 능력치 +1",
             type: 'position',
             condition: 'batter',
@@ -322,84 +511,114 @@ const SET_DECK_TIERS = {
             bonus: { all: 1 }
         }
     },
-    150: {
+    165: {
         optionA: {
-            label: "시즌 & 라이브 & 라이브 올스타 카드: 모든 능력치 +1",
-            type: 'grade',
-            condition: ['시즌', '라이브', '라이브 올스타'],
-            bonus: { all: 1 }
+            label: "타자: 정확, 주루, 수비 +1",
+            type: 'position',
+            condition: 'batter',
+            bonus: { contact: 1, speed: 1, fielding: 1 }
         },
         optionB: {
-            label: "임팩트 & 국가대표 & 시그니처 & 골든글러브 카드: 모든 능력치 +1",
-            type: 'grade',
-            condition: ['임팩트', '국가대표', '시그니처', '골든글러브'],
-            bonus: { all: 1 }
+            label: "투수: 구속, 변화, 수비 +1",
+            type: 'position',
+            condition: 'pitcher',
+            bonus: { velocity: 1, breaking: 1, fielding: 1 }
         }
     },
-    160: {
+    170: {
         optionA: {
             label: "선택 팀 선수: 모든 능력치 +1",
             type: 'team',
             bonus: { all: 1 }
         },
         optionB: {
-            label: "선택 연도 선수: 모든 능력치 +1",
-            type: 'year',
+            label: "임팩트&국가대표&시그니처&골든글러브 카드: 모든 능력치 +1",
+            type: 'grade',
+            condition: ['임팩트', '국가대표', '시그니처', '골든글러브'],
             bonus: { all: 1 }
         }
     },
-    170: {
+    175: {
         optionA: {
-            label: "타자: 모든 능력치 +1",
+            label: "타자: 파워, 선구, 인내 +1",
             type: 'position',
             condition: 'batter',
-            bonus: { all: 1 }
+            bonus: { power: 1, discipline: 1, patience: 1 }
         },
         optionB: {
-            label: "투수: 모든 능력치 +1",
+            label: "투수: 제구, 구위, 지구력 +1",
             type: 'position',
             condition: 'pitcher',
-            bonus: { all: 1 }
+            bonus: { control: 1, movement: 1, stamina: 1 }
         }
     },
     180: {
         optionA: {
-            label: "시즌 & 라이브 & 라이브 올스타 카드: 모든 능력치 +1",
+            label: "라이브&라이브 올스타 카드: 모든 능력치 +2",
             type: 'grade',
-            condition: ['시즌', '라이브', '라이브 올스타'],
-            bonus: { all: 1 }
+            condition: ['라이브', '라이브 올스타'],
+            bonus: { all: 2 }
         },
         optionB: {
-            label: "임팩트 & 국가대표 & 시그니처 & 골든글러브 카드: 모든 능력치 +1",
-            type: 'grade',
-            condition: ['임팩트', '국가대표', '시그니처', '골든글러브'],
+            label: "선택 연도 선수: 모든 능력치 + 1",
+            type: 'year',
+            bonus: { all: 1 }
+        }
+    },
+    185: {
+        optionA: {
+            label: "상위 타선(1~2번 타자): 파워 +2, 주루 +2",
+            type: 'batting_order',
+            condition: 'leadoff',
+            bonus: { power: 2, speed: 2 }
+        },
+        optionB: {
+            label: "선택 연도 타자: 모든 능력치 +1",
+            type: 'year_and_position',
+            condition: { position: 'batter' },
             bonus: { all: 1 }
         }
     },
     190: {
         optionA: {
-            label: "선택 팀 선수: 모든 능력치 +1",
-            type: 'team',
+            label: "선발 투수: 구위 +1, 지구력 +1",
+            type: 'pitcher_role',
+            condition: 'starter',
+            bonus: { movement: 1, stamina: 1 }
+        },
+        optionB: {
+            label: "선택 연도 투수: 모든 능력치 +1",
+            type: 'year_and_position',
+            condition: { position: 'pitcher' },
+            bonus: { all: 1 }
+        }
+    },
+    195: {
+        optionA: {
+            label: "선택 팀 라이브&라이브 올스타&국가대표: 모든 능력치 +1",
+            type: 'team_and_grade',
+            condition: { grades: ['라이브', '라이브 올스타', '국가대표'] },
             bonus: { all: 1 }
         },
         optionB: {
-            label: "선택 연도 선수: 모든 능력치 +1",
-            type: 'year',
+            label: "선택 팀 시그니처: 모든 능력치 +1",
+            type: 'team_and_grade',
+            condition: { grades: ['시그니처'] },
             bonus: { all: 1 }
         }
     },
     200: {
         optionA: {
-            label: "타자: 모든 능력치 +1",
-            type: 'position',
-            condition: 'batter',
-            bonus: { all: 1 }
+            label: "선택 팀 타자: 모든 능력치 +2",
+            type: 'team_and_position',
+            condition: { position: 'batter' },
+            bonus: { all: 2 }
         },
         optionB: {
-            label: "투수: 모든 능력치 +1",
-            type: 'position',
-            condition: 'pitcher',
-            bonus: { all: 1 }
+            label: "선택 팀 투수: 모든 능력치 +2",
+            type: 'team_and_position',
+            condition: { position: 'pitcher' },
+            bonus: { all: 2 }
         }
     }
 };

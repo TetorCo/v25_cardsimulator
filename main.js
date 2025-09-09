@@ -8,16 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     domManager.init();
 
     // 초기 카드 슬롯 추가 (기본 1개)
-    const cardSlotsContainer = document.getElementById('card-slots-container');
-    if (cardSlotsContainer) {
-        cardSlotsContainer.innerHTML = domManager.generateCardSlotHTML(1);
-        // 이벤트 리스너 및 초기 등급 변경 처리는 HTML이 DOM에 추가된 후에 호출
-        domManager.setupCardEventListeners(1);
-        domManager.handleGradeChange(1); // 초기 카드에 대한 등급 변경 처리
-        domManager.updateAddCardButton();
-        // 초기 카드 데이터 업데이트 (모든 설정이 완료된 후)
-        domManager.updateCardData(1);
-    }
+    domManager.addCard();
 });
 
 // 글로벌 헬퍼 함수들은 domManager.js에 정의되어 있습니다.

@@ -6,7 +6,6 @@ class CardCalculator {
         this.cards = [];
     }
 
-    // 카드 데이터 업데이트
     updateCard(cardData) {
         const existingIndex = this.cards.findIndex(card => card.id === cardData.id);
         
@@ -19,43 +18,35 @@ class CardCalculator {
         this.calculateFinalStats(cardData);
     }
 
-    // 최종 능력치 계산
     calculateFinalStats(cardData) {
-        const isPitcher = cardData.playerInfo.position === 'P';
+        const isPitcher = ['SP', 'RP', 'CP'].includes(cardData.playerInfo.position);
         const stats = isPitcher ? 
             ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'] : 
             ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'];
 
         const finalStats = {};
+        const setDeckState = domManager.getSetDeckState();
         
         stats.forEach((stat, index) => {
             const baseStat = cardData.baseStats[stat] || 0;
             const enhancementBonus = this.getEnhancementBonus(cardData, index);
             const trainingIncrease = cardData.growthFactors.trainingDistribution[stat] || 0;
-            // setDeckBonus는 domManager에서 전역 세트덱 상태를 가져와 계산해야 합니다.
-            // 현재는 domManager가 없으므로 0으로 처리하거나, 임시로 빈 객체를 전달합니다.
-            // 실제 구현 시 domManager.getGlobalSetDeckState()를 사용해야 합니다.
-            const setDeckBonus = this.calculateSetDeckBonus(cardData, {}, stat); // 임시로 빈 객체 전달
+            const setDeckBonus = this.calculateSetDeckBonus(cardData, setDeckState, stat);
             
             finalStats[stat] = baseStat + enhancementBonus + trainingIncrease + setDeckBonus;
         });
 
-        // OVR 계산 (app_specification.md에 따라 구현 필요)
-        // 임시로 OVR을 모든 스탯의 평균으로 설정
         const totalStats = Object.values(finalStats).reduce((sum, val) => sum + val, 0);
         finalStats.ovr = totalStats / stats.length;
 
-
         cardData.finalStats = finalStats;
         
-        // 카드 데이터 업데이트
         const cardIndex = this.cards.findIndex(card => card.id === cardData.id);
         if (cardIndex >= 0) {
             this.cards[cardIndex] = cardData;
         }
     }
 
-    // 등급별 강화 보너스 계산
     getEnhancementBonus(cardData, statIndex) {
         const grade = cardData.playerInfo.grade;
         const enhancementLevel = cardData.growthFactors.enhancementLevel;
@@ -67,100 +58,106 @@ class CardCalculator {
         return 0;
     }
 
-    // 세트덱 보너스 계산 (전역 세트덱 설정 기반)
-    calculateSetDeckBonus(cardData, globalSetDeckState, stat) {
+    calculateSetDeckBonus(cardData, setDeckState, stat) {
         let bonus = 0;
-        const playerGrade = cardData.playerInfo.grade;
-        const playerTeam = cardData.playerInfo.team;
-        const playerYear = cardData.playerInfo.year;
-        const playerPosition = cardData.playerInfo.position; // 'P' or batter position
+        const { playerInfo } = cardData;
+        const { selectedSetDeckOptions } = setDeckState;
 
-        // globalSetDeckState가 유효한지 확인
-        if (!globalSetDeckState || !globalSetDeckState.selectedTierOptions) {
-            return 0;
-        }
+        for (const score in selectedSetDeckOptions) {
+            const selection = selectedSetDeckOptions[score];
+            if (!selection || !selection.optionKey) continue;
 
-        // Iterate through selected tier options
-        for (const score in globalSetDeckState.selectedTierOptions) {
-            const selectedOptionKey = globalSetDeckState.selectedTierOptions[score]; // 'optionA' or 'optionB'
             const tierData = SET_DECK_TIERS[score];
+            if (!tierData) continue;
 
-            if (!tierData) continue; // Should not happen if selectedTierOptions is valid
+            const selectedOption = tierData[selection.optionKey];
+            if (!selectedOption || !selectedOption.bonus) continue;
 
-            const selectedOption = tierData[selectedOptionKey];
+            let applyBonus = false;
+            const isBatter = !['SP', 'RP', 'CP'].includes(playerInfo.position);
+            const isPitcher = ['SP', 'RP', 'CP'].includes(playerInfo.position);
 
-            if (selectedOption && selectedOption.bonus) {
-                let applyBonus = false;
-
-                switch (selectedOption.type) {
-                    case 'team':
-                        if (globalSetDeckState.selectedTeam === playerTeam) {
-                            applyBonus = true;
-                        }
-                        break;
-                    case 'grade':
-                        if (selectedOption.condition.includes(playerGrade)) {
-                            applyBonus = true;
-                        }
-                        break;
-                    case 'position':
-                        if (selectedOption.condition === 'batter' && playerPosition !== 'P') {
-                            applyBonus = true;
-                        } else if (selectedOption.condition === 'pitcher' && playerPosition === 'P') {
-                            applyBonus = true;
-                        }
-                        break;
-                    case 'year':
-                        if (globalSetDeckState.selectedYear === playerYear) {
-                            applyBonus = true;
-                        }
-                        break;
-                    case 'year_and_position':
-                        if (globalSetDeckState.selectedYear === playerYear) {
-                            if (selectedOption.condition.position === 'batter' && playerPosition !== 'P') {
-                                applyBonus = true;
-                            } else if (selectedOption.condition.position === 'pitcher' && playerPosition === 'P') {
-                                applyBonus = true;
-                            }
-                        }
-                        break;
-                }
-
-                if (applyBonus) {
-                    if (selectedOption.bonus.all) {
-                        bonus += selectedOption.bonus.all;
-                    } else if (selectedOption.bonus[stat]) {
-                        bonus += selectedOption.bonus[stat];
-                    } else if (selectedOption.bonus.speed && stat === 'speed') { // For specific stats like speed/fielding
-                        bonus += selectedOption.bonus.speed;
-                    } else if (selectedOption.bonus.fielding && stat === 'fielding') {
-                        bonus += selectedOption.bonus.fielding;
-                    } else if (selectedOption.bonus.breaking && stat === 'breaking') {
-                        bonus += selectedOption.bonus.breaking;
-                    } else if (selectedOption.bonus.stamina && stat === 'stamina') {
-                        bonus += selectedOption.bonus.stamina;
+            switch (selectedOption.type) {
+                case 'team':
+                    if (playerInfo.team === selection.team) applyBonus = true;
+                    break;
+                case 'grade':
+                    if (selectedOption.condition.includes(playerInfo.grade)) applyBonus = true;
+                    break;
+                case 'position':
+                    if (selectedOption.condition === 'batter' && isBatter) applyBonus = true;
+                    if (selectedOption.condition === 'pitcher' && isPitcher) applyBonus = true;
+                    break;
+                case 'year':
+                     if (playerInfo.year === selection.year) applyBonus = true;
+                    break;
+                case 'year_and_position':
+                    if (playerInfo.year === selection.year) {
+                        if (selectedOption.condition.position === 'batter' && isBatter) applyBonus = true;
+                        if (selectedOption.condition.position === 'pitcher' && isPitcher) applyBonus = true;
                     }
+                    break;
+                case 'star_and_position':
+                    if (selectedOption.condition.star == playerInfo.star) {
+                        if (isBatter && selectedOption.bonus.batter) applyBonus = true;
+                        if (isPitcher && selectedOption.bonus.pitcher) applyBonus = true;
+                         if(selectedOption.bonus.all) applyBonus = true;
+                    }
+                    break;
+                case 'pitcher_role':
+                    if (isPitcher) {
+                        if (selectedOption.condition === 'starter' && playerInfo.position === 'SP') applyBonus = true;
+                        if (selectedOption.condition === 'reliever' && ['RP', 'CP'].includes(playerInfo.position)) applyBonus = true;
+                    }
+                    break;
+                case 'position_group':
+                    if (selectedOption.condition.includes(playerInfo.position)) applyBonus = true;
+                    break;
+                case 'team_group':
+                    if (selection.team && selectedOption.condition.includes(selection.team)) applyBonus = true;
+                    break;
+                case 'batting_order':
+                    applyBonus = false; // Placeholder
+                    break;
+                case 'team_and_grade':
+                    if (playerInfo.team === selection.team && selectedOption.condition.grades.includes(playerInfo.grade)) {
+                        applyBonus = true;
+                    }
+                    break;
+                case 'team_and_position':
+                    if (playerInfo.team === selection.team) {
+                        if (selectedOption.condition.position === 'batter' && isBatter) applyBonus = true;
+                        if (selectedOption.condition.position === 'pitcher' && isPitcher) applyBonus = true;
+                    }
+                    break;
+            }
+
+            if (applyBonus) {
+                if (selectedOption.bonus.all) {
+                    bonus += selectedOption.bonus.all;
+                } else if (isBatter && selectedOption.bonus.batter && selectedOption.bonus.batter[stat]) {
+                    bonus += selectedOption.bonus.batter[stat];
+                } else if (isPitcher && selectedOption.bonus.pitcher && selectedOption.bonus.pitcher[stat]) {
+                    bonus += selectedOption.bonus.pitcher[stat];
+                } else if (selectedOption.bonus[stat]) {
+                    bonus += selectedOption.bonus[stat];
                 }
             }
         }
         return bonus;
     }
 
-    // 활성화된 카드들만 반환
     getActiveCards() {
-        return this.cards.filter(card => card.isActive);
+        return this.cards.filter(card => card.isActive && card.playerInfo.grade && card.playerInfo.star);
     }
 
-    // 카드 제거
     removeCard(cardId) {
         this.cards = this.cards.filter(card => card.id !== cardId);
     }
 
-    // 모든 카드 초기화
     resetAllCards() {
         this.cards = [];
     }
 }
 
-// 전역 계산기 인스턴스
 const cardCalculator = new CardCalculator();
