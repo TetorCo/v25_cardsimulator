@@ -76,60 +76,50 @@ class CardCalculator {
             let applyBonus = false;
             const isBatter = !['SP', 'RP', 'CP'].includes(playerInfo.position);
             const isPitcher = ['SP', 'RP', 'CP'].includes(playerInfo.position);
+            const optionType = selectedOption.type;
 
-            switch (selectedOption.type) {
-                case 'team':
-                    if (playerInfo.team === selection.team) applyBonus = true;
-                    break;
-                case 'grade':
-                    if (selectedOption.condition.includes(playerInfo.grade)) applyBonus = true;
-                    break;
-                case 'position':
-                    if (selectedOption.condition === 'batter' && isBatter) applyBonus = true;
-                    if (selectedOption.condition === 'pitcher' && isPitcher) applyBonus = true;
-                    break;
-                case 'year':
-                     if (playerInfo.year === selection.year) applyBonus = true;
-                    break;
-                case 'year_and_position':
-                    if (playerInfo.year === selection.year) {
-                        if (selectedOption.condition.position === 'batter' && isBatter) applyBonus = true;
-                        if (selectedOption.condition.position === 'pitcher' && isPitcher) applyBonus = true;
-                    }
-                    break;
-                case 'star_and_position':
-                    if (selectedOption.condition.star == playerInfo.star) {
-                        if (isBatter && selectedOption.bonus.batter) applyBonus = true;
-                        if (isPitcher && selectedOption.bonus.pitcher) applyBonus = true;
-                         if(selectedOption.bonus.all) applyBonus = true;
-                    }
-                    break;
-                case 'pitcher_role':
-                    if (isPitcher) {
-                        if (selectedOption.condition === 'starter' && playerInfo.position === 'SP') applyBonus = true;
-                        if (selectedOption.condition === 'reliever' && ['RP', 'CP'].includes(playerInfo.position)) applyBonus = true;
-                    }
-                    break;
-                case 'position_group':
-                    if (selectedOption.condition.includes(playerInfo.position)) applyBonus = true;
-                    break;
-                case 'team_group':
-                    if (selection.team && selectedOption.condition.includes(selection.team)) applyBonus = true;
-                    break;
-                case 'batting_order':
-                    applyBonus = false; // Placeholder
-                    break;
-                case 'team_and_grade':
-                    if (playerInfo.team === selection.team && selectedOption.condition.grades.includes(playerInfo.grade)) {
-                        applyBonus = true;
-                    }
-                    break;
-                case 'team_and_position':
-                    if (playerInfo.team === selection.team) {
-                        if (selectedOption.condition.position === 'batter' && isBatter) applyBonus = true;
-                        if (selectedOption.condition.position === 'pitcher' && isPitcher) applyBonus = true;
-                    }
-                    break;
+            if (optionType === 'team') {
+                if (selection.team && playerInfo.team === selection.team) {
+                    applyBonus = true;
+                }
+            } else if (optionType === 'year') {
+                if (selection.year && playerInfo.year === selection.year) {
+                    applyBonus = true;
+                }
+            } else if (optionType === 'year_and_position') {
+                if (selection.year && playerInfo.year === selection.year) {
+                    if (selectedOption.condition.position === 'batter' && isBatter) applyBonus = true;
+                    if (selectedOption.condition.position === 'pitcher' && isPitcher) applyBonus = true;
+                }
+            } else if (optionType === 'team_and_grade') {
+                if (selection.team && playerInfo.team === selection.team && selectedOption.condition.grades.includes(playerInfo.grade)) {
+                    applyBonus = true;
+                }
+            } else if (optionType === 'team_and_position') {
+                if (selection.team && playerInfo.team === selection.team) {
+                    if (selectedOption.condition.position === 'batter' && isBatter) applyBonus = true;
+                    if (selectedOption.condition.position === 'pitcher' && isPitcher) applyBonus = true;
+                }
+            } else if (optionType === 'grade') {
+                if (selectedOption.condition.includes(playerInfo.grade)) applyBonus = true;
+            } else if (optionType === 'position') {
+                if (selectedOption.condition === 'batter' && isBatter) applyBonus = true;
+                if (selectedOption.condition === 'pitcher' && isPitcher) applyBonus = true;
+            } else if (optionType === 'star_and_position') {
+                if (String(selectedOption.condition.star) === String(playerInfo.star)) {
+                    if (isBatter && selectedOption.bonus.batter) applyBonus = true;
+                    if (isPitcher && selectedOption.bonus.pitcher) applyBonus = true;
+                    if (selectedOption.bonus.all) applyBonus = true;
+                }
+            } else if (optionType === 'pitcher_role') {
+                if (isPitcher) {
+                    if (selectedOption.condition === 'starter' && playerInfo.position === 'SP') applyBonus = true;
+                    if (selectedOption.condition === 'reliever' && ['RP', 'CP'].includes(playerInfo.position)) applyBonus = true;
+                }
+            } else if (optionType === 'position_group') {
+                if (selectedOption.condition.includes(playerInfo.position)) applyBonus = true;
+            } else if (optionType === 'team_group') {
+                if (selectedOption.condition.includes(playerInfo.team)) applyBonus = true;
             }
 
             if (applyBonus) {

@@ -555,8 +555,8 @@ class DOMManager {
 
     handleSetDeckButtonClick(score, optionKey) {
         const option = SET_DECK_TIERS[score][optionKey];
-        const needsTeamSelection = option.type.includes('team');
-        const needsYearSelection = option.type.includes('year');
+        const needsTeamSelection = ['team', 'team_and_grade', 'team_and_position'].includes(option.type);
+        const needsYearSelection = ['year', 'year_and_position'].includes(option.type);
 
         this.activeSetDeckSelection = { score, optionKey };
 
@@ -572,9 +572,17 @@ class DOMManager {
     handleSetDeckOptionSelection(score, optionKey, extraData = {}) {
         const currentSelection = this.selectedSetDeckOptions[score];
 
+        // If the user is clicking the currently active option key
         if (currentSelection && currentSelection.optionKey === optionKey) {
-            delete this.selectedSetDeckOptions[score];
+            // If no new data is coming from a modal, it's a toggle OFF action.
+            if (Object.keys(extraData).length === 0) {
+                delete this.selectedSetDeckOptions[score];
+            } else {
+                // If new data IS coming from a modal, it's an UPDATE action.
+                this.selectedSetDeckOptions[score] = { optionKey, ...extraData };
+            }
         } else {
+            // If it's a new option for this score level, it's a SET action.
             this.selectedSetDeckOptions[score] = { optionKey, ...extraData };
         }
         
@@ -590,10 +598,12 @@ class DOMManager {
             button.textContent = team;
             button.classList.add('btn-secondary', 'text-sm', 'px-3', 'py-1');
             button.addEventListener('click', () => {
-                if (this.activeModalTargetCardId !== null) {
-                    document.getElementById(`team-display-${this.activeModalTargetCardId}`).textContent = team;
-                    document.getElementById(`team-${this.activeModalTargetCardId}`).value = team;
-                    this.updateCardData(this.activeModalTargetCardId);
+                const cardId = this.activeModalTargetCardId;
+                if (cardId !== null) {
+                    document.getElementById(`team-display-${cardId}`).textContent = team;
+                    document.getElementById(`team-${cardId}`).value = team;
+                    this.updateCardData(cardId);
+                    this.activeModalTargetCardId = null; // FIX: Reset state
                 } else if (this.activeSetDeckSelection.score !== null) {
                     const { score, optionKey } = this.activeSetDeckSelection;
                     this.handleSetDeckOptionSelection(score, optionKey, { team: team });
@@ -613,10 +623,12 @@ class DOMManager {
             button.textContent = year;
             button.classList.add('btn-secondary', 'text-sm', 'px-3', 'py-1');
             button.addEventListener('click', () => {
-                if (this.activeModalTargetCardId !== null) {
-                    document.getElementById(`year-display-${this.activeModalTargetCardId}`).textContent = year;
-                    document.getElementById(`year-${this.activeModalTargetCardId}`).value = year;
-                    this.updateCardData(this.activeModalTargetCardId);
+                const cardId = this.activeModalTargetCardId;
+                if (cardId !== null) {
+                    document.getElementById(`year-display-${cardId}`).textContent = year;
+                    document.getElementById(`year-${cardId}`).value = year;
+                    this.updateCardData(cardId);
+                    this.activeModalTargetCardId = null; // FIX: Reset state
                 } else if (this.activeSetDeckSelection.score !== null) {
                     const { score, optionKey } = this.activeSetDeckSelection;
                     this.handleSetDeckOptionSelection(score, optionKey, { year: year });
