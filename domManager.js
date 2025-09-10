@@ -2,26 +2,11 @@
 // UI 요소 생성, 업데이트, 이벤트 처리를 담당하는 모듈
 
 const GRADES = ['라이브', '라이브 올스타', '시즌', '임팩트', '시그니처', '골든글러브', '국가대표'];
-const POSITIONS = {
-    '1B': '1루수',
-    '2B': '2루수',
-    '3B': '3루수',
-    'SS': '유격수',
-    'LF': '좌익수',
-    'CF': '중견수',
-    'RF': '우익수',
-    'C': '포수',
-    'DH': '지명타자',
-    'SP': '선발투수',
-    'RP': '중계투수',
-    'CP': '마무리투수'
-};
 
 class DOMManager {
     constructor() {
         this.currentCardCount = 0;
         this.maxCards = MAX_CARDS;
-        this.globalSetDeckScore = 0;
         this.selectedSetDeckOptions = {}; // { score: { optionKey, team, year } }
         this.activeModalTargetCardId = null;
         this.activeSetDeckSelection = { score: null, optionKey: null };
@@ -32,7 +17,119 @@ class DOMManager {
         this.populateYearButtons();
         this.populateGradeButtons();
         this.populatePositionButtons();
-        this.populateSetDeckScoreOptions();
+        document.getElementById('open-setdeck-modal-btn').addEventListener('click', () => this.openSetDeckModal());
+    }
+
+    openSetDeckModal() {
+        this.activeModalTargetCardId = null; // Clear card context
+        this.populateSetDeckOptions();
+        this.openModal('set-deck-settings-modal');
+    }
+
+    populateSetDeckOptions() {
+        const container = document.getElementById('setdeck-options-container');
+        container.innerHTML = '';
+
+        // Header
+        const header = document.createElement('div');
+        header.classList.add('grid', 'grid-cols-3', 'gap-4', 'text-center', 'font-bold', 'mb-4', 'pb-2', 'border-b', 'border-gray-600');
+        header.innerHTML = `<div>옵션 A</div><div>스코어</div><div>옵션 B</div>`;
+        container.appendChild(header);
+
+        const sortedScores = Object.keys(SET_DECK_TIERS).map(Number).sort((a, b) => a - b);
+
+        sortedScores.forEach(score => {
+            const tierData = SET_DECK_TIERS[score];
+            const selection = this.selectedSetDeckOptions[score];
+
+            const row = document.createElement('div');
+            row.classList.add('grid', 'grid-cols-3', 'gap-4', 'items-center', 'text-center', 'mb-2');
+
+            // Option A
+            const cellA = document.createElement('div');
+            if (tierData.optionA) {
+                const button = this.createSetDeckOptionButton(score, 'optionA', selection);
+                cellA.appendChild(button);
+            }
+            row.appendChild(cellA);
+
+            // Score
+            const cellScore = document.createElement('div');
+            cellScore.classList.add('accent-gold', 'font-semibold');
+            cellScore.textContent = score;
+            row.appendChild(cellScore);
+
+            // Option B
+            const cellB = document.createElement('div');
+            if (tierData.optionB) {
+                const button = this.createSetDeckOptionButton(score, 'optionB', selection);
+                cellB.appendChild(button);
+            }
+            row.appendChild(cellB);
+
+            container.appendChild(row);
+        });
+    }
+
+    createSetDeckOptionButton(score, optionKey, selection) {
+        const option = SET_DECK_TIERS[score][optionKey];
+        const button = document.createElement('button');
+        let label = option.label;
+
+        if (selection && selection.optionKey === optionKey) {
+            if (selection.team) label += ` (${selection.team})`;
+            if (selection.year) label += ` (${selection.year})`;
+        }
+
+        button.textContent = label;
+        button.classList.add('btn-secondary', 'w-full', 'text-sm', 'p-2');
+
+        if (selection && selection.optionKey === optionKey) {
+            button.classList.add('active');
+        }
+
+        button.addEventListener('click', () => {
+            this.handleSetDeckButtonClick(score, optionKey);
+        });
+
+        return button;
+    }
+
+    handleSetDeckButtonClick(score, optionKey) {
+        const currentSelection = this.selectedSetDeckOptions[score];
+        const option = SET_DECK_TIERS[score][optionKey];
+        const needsTeamSelection = ['team', 'team_and_grade', 'team_and_position'].includes(option.type);
+        const needsYearSelection = ['year', 'year_and_position'].includes(option.type);
+
+        if (currentSelection && currentSelection.optionKey === optionKey && (needsTeamSelection || needsYearSelection)) {
+            this.activeSetDeckSelection = { score, optionKey };
+            if (needsTeamSelection) this.openModal('team-selection-modal');
+            if (needsYearSelection) this.openModal('year-selection-modal');
+            return; 
+        }
+
+        if (currentSelection && currentSelection.optionKey === optionKey) {
+            delete this.selectedSetDeckOptions[score];
+        } else {
+            this.selectedSetDeckOptions[score] = { optionKey };
+            if (needsTeamSelection || needsYearSelection) {
+                this.activeSetDeckSelection = { score, optionKey };
+                if (needsTeamSelection) this.openModal('team-selection-modal');
+                if (needsYearSelection) this.openModal('year-selection-modal');
+            }
+        }
+
+        this.populateSetDeckOptions();
+        this.updateAllCards();
+    }
+    
+    handleSetDeckOptionSelection(score, optionKey, extraData = {}) {
+        const currentSelection = this.selectedSetDeckOptions[score];
+        if (currentSelection) {
+            this.selectedSetDeckOptions[score] = { ...currentSelection, ...extraData };
+        }
+        this.populateSetDeckOptions();
+        this.updateAllCards();
     }
 
     openModal(modalId) {
@@ -44,21 +141,25 @@ class DOMManager {
     }
 
     openTeamModalForCard(cardId) {
+        this.activeSetDeckSelection = { score: null, optionKey: null }; 
         this.activeModalTargetCardId = cardId;
         this.openModal('team-selection-modal');
     }
 
     openYearModalForCard(cardId) {
+        this.activeSetDeckSelection = { score: null, optionKey: null }; 
         this.activeModalTargetCardId = cardId;
         this.openModal('year-selection-modal');
     }
 
     openGradeModalForCard(cardId) {
+        this.activeSetDeckSelection = { score: null, optionKey: null }; 
         this.activeModalTargetCardId = cardId;
         this.openModal('grade-selection-modal');
     }
 
     openPositionModalForCard(cardId) {
+        this.activeSetDeckSelection = { score: null, optionKey: null }; 
         this.activeModalTargetCardId = cardId;
         this.openModal('position-selection-modal');
     }
@@ -86,7 +187,7 @@ class DOMManager {
 
         const trainingInputs = document.querySelectorAll(`#training-batter-${cardId} input, #training-pitcher-${cardId} input`);
         trainingInputs.forEach(input => {
-            input.addEventListener('input', () => this.updateTrainingPointsInfo(cardId, input));
+            input.addEventListener('input', () => this.updateCardData(cardId));
         });
     }
 
@@ -166,7 +267,7 @@ class DOMManager {
 
     togglePositionStats(cardId) {
         const position = document.getElementById(`position-${cardId}`).value;
-        const isPitcher = ['SP', 'RP', 'CP'].includes(position);
+        const isPitcher = ['선발투수', '불펜투수'].includes(position);
         
         const batterStats = document.getElementById(`batter-stats-${cardId}`);
         const pitcherStats = document.getElementById(`pitcher-stats-${cardId}`);
@@ -192,13 +293,13 @@ class DOMManager {
         const cardData = this.collectCardData(cardId);
         
         if (cardData) {
+            this.updateTrainingPointsInfo(cardId); 
             cardCalculator.updateCard(cardData);
             this.updateFinalStatsDisplay(cardId);
             this.updateComparisonSection();
         } else {
             this.clearFinalStatsDisplay(cardId);
         }
-        this.updateTrainingPointsInfo(cardId);
     }
 
     updateGrowthFactorsAvailability(cardId) {
@@ -219,8 +320,9 @@ class DOMManager {
         const team = document.getElementById(`team-${cardId}`).value;
         const year = document.getElementById(`year-${cardId}`).value;
         const position = document.getElementById(`position-${cardId}`).value;
+        const battingOrder = document.getElementById(`batting-order-${cardId}`).value;
 
-        const isPitcher = ['SP', 'RP', 'CP'].includes(position);
+        const isPitcher = ['선발투수', '불펜투수'].includes(position);
         const baseStats = {};
         const trainingDistribution = {};
 
@@ -236,7 +338,7 @@ class DOMManager {
         return {
             id: cardId,
             isActive: true,
-            playerInfo: { name: playerName, team: team, year: year, grade: grade, star: star, position: position },
+            playerInfo: { name: playerName, team: team, year: year, grade: grade, star: star, position: position, battingOrder: battingOrder },
             baseStats: baseStats,
             growthFactors: {
                 enhancementLevel: parseInt(document.getElementById(`enhancement-level-${cardId}`).value) || 0,
@@ -253,7 +355,7 @@ class DOMManager {
         const finalStatsContainer = document.getElementById(`final-stats-${cardId}`);
         if (!finalStatsContainer) return;
 
-        const isPitcher = ['SP', 'RP', 'CP'].includes(cardData.playerInfo.position);
+        const isPitcher = ['선발투수', '불펜투수'].includes(cardData.playerInfo.position);
         const stats = isPitcher ? ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'] : ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'];
         const statLabels = isPitcher ? ['구속', '제구', '구위', '변화', '지구력', '수비'] : ['파워', '정확', '선구', '주루', '인내', '수비'];
 
@@ -300,28 +402,37 @@ class DOMManager {
                 
                 <div class="mb-6">
                     <h4 class="text-lg font-medium mb-3">선수 정보</h4>
-                    <div class="grid grid-cols-3 gap-3">
+                    <div class="grid grid-cols-2 gap-4">
                         <div><label class="block text-sm text-secondary mb-1">선수명</label><input type="text" id="player-name-${cardId}" class="input-field w-full" placeholder="예: 이정후"></div>
+                        <div>
+                            <label class="block text-sm text-secondary mb-1">종류</label>
+                            <button onclick="domManager.openGradeModalForCard(${cardId})" class="input-field w-full text-left h-[42px]"><span id="grade-display-${cardId}">종류 선택</span></button>
+                            <input type="hidden" id="grade-${cardId}" value="">
+                        </div>
                         <div>
                             <label class="block text-sm text-secondary mb-1">팀</label>
                             <button onclick="domManager.openTeamModalForCard(${cardId})" class="input-field w-full text-left h-[42px]"><span id="team-display-${cardId}">팀 선택</span></button>
                             <input type="hidden" id="team-${cardId}" value="">
                         </div>
+                        <div id="star-rating-container-${cardId}"><label class="block text-sm text-secondary mb-1">등급</label><select id="star-rating-${cardId}" class="input-field w-full"></select></div>
                         <div>
                             <label class="block text-sm text-secondary mb-1">연도</label>
                             <button onclick="domManager.openYearModalForCard(${cardId})" class="input-field w-full text-left h-[42px]"><span id="year-display-${cardId}">연도 선택</span></button>
                             <input type="hidden" id="year-${cardId}" value="">
                         </div>
                         <div>
-                            <label class="block text-sm text-secondary mb-1">종류</label>
-                            <button onclick="domManager.openGradeModalForCard(${cardId})" class="input-field w-full text-left h-[42px]"><span id="grade-display-${cardId}">종류 선택</span></button>
-                            <input type="hidden" id="grade-${cardId}" value="">
-                        </div>
-                        <div id="star-rating-container-${cardId}"><label class="block text-sm text-secondary mb-1">등급</label><select id="star-rating-${cardId}" class="input-field w-full"></select></div>
-                        <div>
                             <label class="block text-sm text-secondary mb-1">포지션</label>
                             <button onclick="domManager.openPositionModalForCard(${cardId})" class="input-field w-full text-left h-[42px]"><span id="position-display-${cardId}">포지션 선택</span></button>
                             <input type="hidden" id="position-${cardId}" value="">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-sm text-secondary mb-1">타순</label>
+                            <div id="batting-order-selector-${cardId}" class="grid grid-cols-3 gap-2">
+                                <button type="button" class="enhancement-btn" data-order="상위" onclick="setBattingOrder(${cardId}, '상위')">상위</button>
+                                <button type="button" class="enhancement-btn" data-order="중심" onclick="setBattingOrder(${cardId}, '중심')">중심</button>
+                                <button type="button" class="enhancement-btn" data-order="하위" onclick="setBattingOrder(${cardId}, '하위')">하위</button>
+                            </div>
+                            <input type="hidden" id="batting-order-${cardId}" value="">
                         </div>
                     </div>
                 </div>
@@ -389,7 +500,7 @@ class DOMManager {
         const activeCards = cardCalculator.getActiveCards();
         const tableBody = document.getElementById('comparison-table-body');
         let html = '';
-        const hasPitcher = activeCards.some(card => ['SP', 'RP', 'CP'].includes(card.playerInfo.position));
+        const hasPitcher = activeCards.some(card => ['선발투수', '불펜투수'].includes(card.playerInfo.position));
         let statHeaders = hasPitcher ? ['구속', '제구', '구위', '변화', '지구력', '수비'] : ['파워', '정확', '선구', '주루', '인내', '수비'];
         
         const tableHeadRow = document.getElementById('comparison-table-head-row');
@@ -400,7 +511,7 @@ class DOMManager {
         }
 
         activeCards.forEach(card => {
-            const isPitcher = ['SP', 'RP', 'CP'].includes(card.playerInfo.position);
+            const isPitcher = ['선발투수', '불펜투수'].includes(card.playerInfo.position);
             const stats = isPitcher ? ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'] : ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'];
             html += `<tr class="border-b border-gray-600"><td class="py-3 px-4 font-semibold">${card.playerInfo.name || `카드 ${card.id}`}</td>`;
             stats.forEach(stat => {
@@ -437,11 +548,15 @@ class DOMManager {
         document.getElementById(`grade-${cardId}`).value = '';
         document.getElementById(`position-display-${cardId}`).textContent = '포지션 선택';
         document.getElementById(`position-${cardId}`).value = '';
+        document.getElementById(`batting-order-${cardId}`).value = '';
 
         document.getElementById(`enhancement-level-${cardId}`).value = '0';
         const enhancementButtons = cardSlot.querySelectorAll('.enhancement-btn');
         enhancementButtons.forEach(btn => btn.classList.remove('active'));
         cardSlot.querySelector(`.enhancement-btn[data-level="0"]`).classList.add('active');
+        
+        const battingOrderButtons = cardSlot.querySelectorAll(`#batting-order-selector-${cardId} button`);
+        battingOrderButtons.forEach(btn => btn.classList.remove('active'));
 
         this.handleGradeChange(cardId);
         this.updateCardData(cardId);
@@ -449,7 +564,6 @@ class DOMManager {
 
     getSetDeckState() {
         return {
-            globalSetDeckScore: this.globalSetDeckScore,
             selectedSetDeckOptions: this.selectedSetDeckOptions
         };
     }
@@ -494,102 +608,6 @@ class DOMManager {
         });
     }
 
-    updateSetDeckScore() {
-        const scoreInput = document.getElementById('set-deck-score-input');
-        this.globalSetDeckScore = parseInt(scoreInput.value) || 0;
-        document.getElementById('selected-set-deck-score-display').textContent = this.globalSetDeckScore;
-        this.populateSetDeckScoreOptions();
-        this.updateAllCards();
-        this.closeModal('set-deck-score-modal');
-    }
-
-    populateSetDeckScoreOptions() {
-        const container = document.getElementById('setdeck-score-options-container');
-        container.innerHTML = '';
-        const sortedScores = Object.keys(SET_DECK_TIERS).map(Number).sort((a, b) => a - b);
-
-        sortedScores.forEach(score => {
-            if (score > this.globalSetDeckScore) return;
-
-            const tierData = SET_DECK_TIERS[score];
-            const tierDiv = document.createElement('div');
-            tierDiv.classList.add('mb-4', 'p-3', 'border', 'border-gray-700', 'rounded-md');
-
-            const scoreHeader = document.createElement('h4');
-            scoreHeader.classList.add('text-lg', 'font-medium', 'mb-2');
-            scoreHeader.textContent = `세트덱 스코어 ${score}`;
-            tierDiv.appendChild(scoreHeader);
-
-            const optionsDiv = document.createElement('div');
-            optionsDiv.classList.add('flex', 'space-x-2');
-
-            const selection = this.selectedSetDeckOptions[score];
-
-            ['optionA', 'optionB'].forEach(optionKey => {
-                const option = tierData[optionKey];
-                if (option) {
-                    const button = document.createElement('button');
-                    let label = option.label;
-                    if (selection && selection.optionKey === optionKey) {
-                        if (selection.team) label += ` (${selection.team})`;
-                        if (selection.year) label += ` (${selection.year})`;
-                    }
-                    button.textContent = label;
-                    button.classList.add('btn-secondary', 'text-sm', 'px-3', 'py-1', 'flex-1');
-                    
-                    if (selection && selection.optionKey === optionKey) {
-                        button.classList.add('active');
-                    }
-
-                    button.addEventListener('click', () => {
-                        this.handleSetDeckButtonClick(score, optionKey);
-                    });
-                    optionsDiv.appendChild(button);
-                }
-            });
-
-            tierDiv.appendChild(optionsDiv);
-            container.appendChild(tierDiv);
-        });
-    }
-
-    handleSetDeckButtonClick(score, optionKey) {
-        const option = SET_DECK_TIERS[score][optionKey];
-        const needsTeamSelection = ['team', 'team_and_grade', 'team_and_position'].includes(option.type);
-        const needsYearSelection = ['year', 'year_and_position'].includes(option.type);
-
-        this.activeSetDeckSelection = { score, optionKey };
-
-        if (needsTeamSelection) {
-            this.openModal('team-selection-modal');
-        } else if (needsYearSelection) {
-            this.openModal('year-selection-modal');
-        } else {
-            this.handleSetDeckOptionSelection(score, optionKey);
-        }
-    }
-
-    handleSetDeckOptionSelection(score, optionKey, extraData = {}) {
-        const currentSelection = this.selectedSetDeckOptions[score];
-
-        // If the user is clicking the currently active option key
-        if (currentSelection && currentSelection.optionKey === optionKey) {
-            // If no new data is coming from a modal, it's a toggle OFF action.
-            if (Object.keys(extraData).length === 0) {
-                delete this.selectedSetDeckOptions[score];
-            } else {
-                // If new data IS coming from a modal, it's an UPDATE action.
-                this.selectedSetDeckOptions[score] = { optionKey, ...extraData };
-            }
-        } else {
-            // If it's a new option for this score level, it's a SET action.
-            this.selectedSetDeckOptions[score] = { optionKey, ...extraData };
-        }
-        
-        this.populateSetDeckScoreOptions();
-        this.updateAllCards();
-    }
-
     populateTeamButtons() {
         const container = document.getElementById('team-buttons-container');
         container.innerHTML = '';
@@ -603,7 +621,7 @@ class DOMManager {
                     document.getElementById(`team-display-${cardId}`).textContent = team;
                     document.getElementById(`team-${cardId}`).value = team;
                     this.updateCardData(cardId);
-                    this.activeModalTargetCardId = null; // FIX: Reset state
+                    this.activeModalTargetCardId = null; 
                 } else if (this.activeSetDeckSelection.score !== null) {
                     const { score, optionKey } = this.activeSetDeckSelection;
                     this.handleSetDeckOptionSelection(score, optionKey, { team: team });
@@ -628,7 +646,7 @@ class DOMManager {
                     document.getElementById(`year-display-${cardId}`).textContent = year;
                     document.getElementById(`year-${cardId}`).value = year;
                     this.updateCardData(cardId);
-                    this.activeModalTargetCardId = null; // FIX: Reset state
+                    this.activeModalTargetCardId = null;
                 } else if (this.activeSetDeckSelection.score !== null) {
                     const { score, optionKey } = this.activeSetDeckSelection;
                     this.handleSetDeckOptionSelection(score, optionKey, { year: year });
@@ -658,6 +676,30 @@ function setEnhancementLevel(cardId, level) {
     domManager.updateCardData(cardId);
 }
 
+function setBattingOrder(cardId, order) {
+    const selector = `#batting-order-selector-${cardId}`;
+    const buttons = document.querySelectorAll(`${selector} button`);
+    const input = document.getElementById(`batting-order-${cardId}`);
+    
+    const currentOrder = input.value;
+
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    if (currentOrder === order) {
+        // If clicking the active button, deselect it
+        input.value = '';
+    } else {
+        // Otherwise, select the new one
+        const selectedBtn = document.querySelector(`${selector} button[data-order="${order}"]`);
+        if (selectedBtn) {
+            selectedBtn.classList.add('active');
+        }
+        input.value = order;
+    }
+    domManager.updateCardData(cardId);
+}
+
+
 function validateIntegerInput(input) {
     let value = input.value;
     if (value === '' || value === null || value === undefined) {
@@ -683,8 +725,8 @@ function addCard() {
     domManager.addCard();
 }
 
-function resetCard(cardId) {
-    domManager.resetCard(cardId);
+function resetCard() {
+    domManager.resetCard();
 }
 
 function closeTeamModal() {
@@ -694,3 +736,4 @@ function closeTeamModal() {
 function closeYearModal() {
     domManager.closeModal('year-selection-modal');
 }
+''

@@ -1,6 +1,16 @@
 // 컴투스프로야구V25 카드 성장 시뮬레이터 - 상수 데이터
 // 게임 내 수치를 기반으로 한 상수값들
 
+// 포지션 그룹 정의
+const POSITIONS = {
+    '내야수': '내야수',
+    '외야수': '외야수',
+    '포수': '포수',
+    '지명타자': '지명타자',
+    '선발투수': '선발투수',
+    '불펜투수': '불펜투수'
+};
+
 // 강화 보너스 테이블 (등급별, 강화단계별)
 // 타자 스탯 배열 순서: [파워, 정확, 선구, 주루, 인내, 수비]
 // 투수 스탯 배열 순서: [구속, 제구, 구위, 변화, 지구력, 수비]
@@ -104,18 +114,12 @@ const PITCHER_SET_DECK_RULES = {
 
 // 포지션별 핵심 능력치 정의 (추천 알고리즘용)
 const POSITION_KEY_STATS = {
-    // 타자 포지션 (새로운 능력치 구조)
-    '1B': ['power', 'contact'], // 1루수: 파워, 정확
-    '2B': ['contact', 'speed'], // 2루수: 정확, 주루
-    '3B': ['power', 'fielding'], // 3루수: 파워, 수비
-    'SS': ['contact', 'fielding'], // 유격수: 정확, 수비
-    'LF': ['power', 'contact'], // 좌익수: 파워, 정확
-    'CF': ['speed', 'fielding'], // 중견수: 주루, 수비
-    'RF': ['power', 'contact'], // 우익수: 파워, 정확
-    'C': ['contact', 'fielding'], // 포수: 정확, 수비
-    
-    // 투수 포지션 (새로운 능력치 구조)
-    'P': ['velocity', 'control'] // 투수: 구속, 제구
+    '내야수': ['power', 'contact', 'fielding'],
+    '외야수': ['power', 'contact', 'speed', 'fielding'],
+    '포수': ['contact', 'fielding'],
+    '지명타자': ['power', 'contact'],
+    '선발투수': ['velocity', 'control', 'stamina'],
+    '불펜투수': ['velocity', 'control', 'breaking']
 };
 
 // 차트 색상 팔레트
@@ -311,13 +315,13 @@ const SET_DECK_TIERS = {
         optionA: {
             label: "내야수, 포수: 인내, 수비 +2",
             type: 'position_group',
-            condition: ['1B', '2B', '3B', 'SS', 'C'],
+            condition: ['내야수', '포수'],
             bonus: { patience: 2, fielding: 2 }
         },
         optionB: {
             label: "외야수, 지명타자: 선구, 주루 +2",
             type: 'position_group',
-            condition: ['LF', 'CF', 'RF', 'DH'],
+            condition: ['외야수', '지명타자'],
             bonus: { discipline: 2, speed: 2 }
         }
     },

@@ -19,7 +19,7 @@ class CardCalculator {
     }
 
     calculateFinalStats(cardData) {
-        const isPitcher = ['SP', 'RP', 'CP'].includes(cardData.playerInfo.position);
+        const isPitcher = ['선발투수', '불펜투수'].includes(cardData.playerInfo.position);
         const stats = isPitcher ? 
             ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'] : 
             ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'];
@@ -74,8 +74,8 @@ class CardCalculator {
             if (!selectedOption || !selectedOption.bonus) continue;
 
             let applyBonus = false;
-            const isBatter = !['SP', 'RP', 'CP'].includes(playerInfo.position);
-            const isPitcher = ['SP', 'RP', 'CP'].includes(playerInfo.position);
+            const isBatter = !['선발투수', '불펜투수'].includes(playerInfo.position);
+            const isPitcher = ['선발투수', '불펜투수'].includes(playerInfo.position);
             const optionType = selectedOption.type;
 
             if (optionType === 'team') {
@@ -113,11 +113,21 @@ class CardCalculator {
                 }
             } else if (optionType === 'pitcher_role') {
                 if (isPitcher) {
-                    if (selectedOption.condition === 'starter' && playerInfo.position === 'SP') applyBonus = true;
-                    if (selectedOption.condition === 'reliever' && ['RP', 'CP'].includes(playerInfo.position)) applyBonus = true;
+                    if (selectedOption.condition === 'starter' && playerInfo.position === '선발투수') applyBonus = true;
+                    if (selectedOption.condition === 'reliever' && playerInfo.position === '불펜투수') applyBonus = true;
                 }
             } else if (optionType === 'position_group') {
                 if (selectedOption.condition.includes(playerInfo.position)) applyBonus = true;
+            } else if (optionType === 'batting_order') {
+                const order = playerInfo.battingOrder;
+                const condition = selectedOption.condition;
+                if (isBatter && order) {
+                    if ((condition === 'leadoff' && order === '상위') ||
+                        (condition === 'cleanup' && order === '중심') ||
+                        (condition === 'lower' && order === '하위')) {
+                        applyBonus = true;
+                    }
+                }
             } else if (optionType === 'team_group') {
                 if (selectedOption.condition.includes(playerInfo.team)) applyBonus = true;
             }

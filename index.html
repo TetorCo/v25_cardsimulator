@@ -184,6 +184,11 @@
             background-color: #FFFFFF;
             color: #1A1A2E;
         }
+        .modal-content .btn-secondary.active {
+            background-color: #F9B233;
+            color: #1A1A2E;
+            border-color: #F9B233;
+        }
     </style>
 </head>
 <body>
@@ -200,30 +205,12 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-6 py-8">
-        <!-- Global Settings Section -->
-        <section id="global-settings-section" class="mb-12">
-            <h2 class="text-3xl font-bold mb-8 text-center">세트덱 설정</h2>
-            <div class="card-bg rounded-lg p-6 mb-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold">세트덱 스코어 및 옵션</h3>
-                </div>
-                <div class="flex justify-center items-center space-x-4 mb-4">
-                    <div>
-                        <span class="text-secondary mr-2">세트덱 스코어:</span>
-                        <button id="set-deck-score-btn" onclick="domManager.openModal('set-deck-score-modal')" class="btn-secondary px-4 py-2">
-                            <span id="selected-set-deck-score-display">0</span>
-                        </button>
-                    </div>
-                </div>
-                <div id="setdeck-score-options-container">
-                    <!-- Set deck score options will be dynamically loaded here by JavaScript -->
-                </div>
-            </div>
-        </section>
-
         <!-- Simulator Section -->
         <section id="simulator-section" class="mb-12">
-            <h2 class="text-3xl font-bold mb-8 text-center">카드 시뮬레이터</h2>
+            <div class="flex justify-center items-center mb-8">
+                <h2 class="text-3xl font-bold">카드 시뮬레이터</h2>
+                <button id="open-setdeck-modal-btn" class="btn-secondary ml-4 px-4 py-2">세트덱 설정</button>
+            </div>
 
             <!-- Card Slots Container -->
             <div id="card-slots-container" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
@@ -277,6 +264,19 @@
 
         
         <!-- Modals -->
+        <!-- Set Deck Settings Modal -->
+        <div id="set-deck-settings-modal" class="modal hidden">
+            <div class="modal-content" style="max-width: 1100px;">
+                <h3 class="text-2xl font-semibold mb-6">세트덱 설정</h3>
+                <div id="setdeck-options-container" class="overflow-y-auto" style="max-height: 70vh;">
+                    <!-- Set deck options will be populated here by JavaScript -->
+                </div>
+                <div class="text-right mt-6">
+                    <button class="btn-primary" onclick="domManager.closeModal('set-deck-settings-modal')">닫기</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Set Deck Score Modal -->
         <div id="set-deck-score-modal" class="modal hidden">
             <div class="modal-content">
