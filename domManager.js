@@ -10,15 +10,30 @@ class DOMManager {
         this.selectedSetDeckOptions = {}; // { score: { optionKey, team, year } }
         this.activeModalTargetCardId = null;
         this.activeSetDeckSelection = { score: null, optionKey: null };
+        this.simulatorType = 'batter'; // 'batter' or 'pitcher'
     }
 
-    init() {
+    init(type) {
+        this.simulatorType = type;
+
+        const titleElement = document.getElementById('simulator-mode-title');
+        if (type === 'pitcher') {
+            document.title = '투수 시뮬레이터 - 컴투스프로야구V25';
+            titleElement.textContent = '투수 시뮬레이터';
+        } else {
+            document.title = '타자 시뮬레이터 - 컴투스프로야구V25';
+            titleElement.textContent = '타자 시뮬레이터';
+        }
+
         this.populateTeamButtons();
         this.populateYearButtons();
         this.populateGradeButtons();
         this.populatePositionButtons();
         document.getElementById('open-setdeck-modal-btn').addEventListener('click', () => this.openSetDeckModal());
+        this.updateComparisonTable();
+        this.addCard();
     }
+    
 
     openSetDeckModal() {
         this.activeModalTargetCardId = null; // Clear card context
@@ -265,28 +280,7 @@ class DOMManager {
         }
     }
 
-    togglePositionStats(cardId) {
-        const position = document.getElementById(`position-${cardId}`).value;
-        const isPitcher = ['선발투수', '불펜투수'].includes(position);
-        
-        const batterStats = document.getElementById(`batter-stats-${cardId}`);
-        const pitcherStats = document.getElementById(`pitcher-stats-${cardId}`);
-        const batterTraining = document.getElementById(`training-batter-${cardId}`);
-        const pitcherTraining = document.getElementById(`training-pitcher-${cardId}`);
-        
-        if (isPitcher) {
-            batterStats.classList.add('hidden');
-            pitcherStats.classList.remove('hidden');
-            batterTraining.classList.add('hidden');
-            pitcherTraining.classList.remove('hidden');
-        } else {
-            batterStats.classList.remove('hidden');
-            pitcherStats.classList.add('hidden');
-            batterTraining.classList.remove('hidden');
-            pitcherTraining.classList.add('hidden');
-        }
-        this.updateCardData(cardId);
-    }
+    
 
     updateCardData(cardId) {
         this.updateGrowthFactorsAvailability(cardId);
@@ -320,15 +314,15 @@ class DOMManager {
         const team = document.getElementById(`team-${cardId}`).value;
         const year = document.getElementById(`year-${cardId}`).value;
         const position = document.getElementById(`position-${cardId}`).value;
-        const battingOrder = document.getElementById(`batting-order-${cardId}`).value;
+        
+        const isPitcher = this.simulatorType === 'pitcher';
+        const battingOrderInput = document.getElementById(`batting-order-${cardId}`);
+        const battingOrder = isPitcher ? null : (battingOrderInput ? battingOrderInput.value : null);
 
-        const isPitcher = ['선발투수', '불펜투수'].includes(position);
         const baseStats = {};
         const trainingDistribution = {};
 
-        const statTypes = isPitcher 
-            ? ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'] 
-            : ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'];
+        const statTypes = isPitcher ? PITCHER_STATS : BATTER_STATS;
 
         statTypes.forEach(stat => {
             baseStats[stat] = parseInt(document.getElementById(`${stat}-${cardId}`).value) || 0;
@@ -355,9 +349,9 @@ class DOMManager {
         const finalStatsContainer = document.getElementById(`final-stats-${cardId}`);
         if (!finalStatsContainer) return;
 
-        const isPitcher = ['선발투수', '불펜투수'].includes(cardData.playerInfo.position);
-        const stats = isPitcher ? ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'] : ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'];
-        const statLabels = isPitcher ? ['구속', '제구', '구위', '변화', '지구력', '수비'] : ['파워', '정확', '선구', '주루', '인내', '수비'];
+        const isPitcher = this.simulatorType === 'pitcher';
+        const stats = isPitcher ? PITCHER_STATS : BATTER_STATS;
+        const statLabels = isPitcher ? PITCHER_STAT_LABELS : BATTER_STAT_LABELS;
 
         let html = '';
         stats.forEach((stat, index) => {
@@ -389,9 +383,25 @@ class DOMManager {
     }
 
     generateCardSlotHTML(cardId) {
+        const isPitcher = this.simulatorType === 'pitcher';
+        const statKeys = isPitcher ? PITCHER_STATS : BATTER_STATS;
+        const statLabels = isPitcher ? PITCHER_STAT_LABELS : BATTER_STAT_LABELS;
+
         const generateStatInputs = (id, stats, labels, prefix = '') => {
             return stats.map((stat, i) => `<div><label class="block text-sm text-secondary mb-1">${labels[i]}</label><input type="number" id="${prefix}${stat}-${id}" class="input-field w-full" min="0" max="150" value="0" oninput="validateIntegerInput(this)"></div>`).join('');
         };
+
+        const battingOrderHTML = isPitcher ? '' : `
+            <div class="col-span-2">
+                <label class="block text-sm text-secondary mb-1">타순</label>
+                <div id="batting-order-selector-${cardId}" class="grid grid-cols-3 gap-2">
+                    <button type="button" class="enhancement-btn" data-order="상위" onclick="setBattingOrder(${cardId}, '상위')">상위</button>
+                    <button type="button" class="enhancement-btn" data-order="중심" onclick="setBattingOrder(${cardId}, '중심')">중심</button>
+                    <button type="button" class="enhancement-btn" data-order="하위" onclick="setBattingOrder(${cardId}, '하위')">하위</button>
+                </div>
+                <input type="hidden" id="batting-order-${cardId}" value="">
+            </div>
+        `;
 
         return `
             <div id="card-slot-${cardId}" class="card-bg rounded-lg p-6 border border-gray-600">
@@ -405,14 +415,14 @@ class DOMManager {
                     <div class="grid grid-cols-2 gap-4">
                         <div><label class="block text-sm text-secondary mb-1">선수명</label><input type="text" id="player-name-${cardId}" class="input-field w-full" placeholder="예: 이정후"></div>
                         <div>
-                            <label class="block text-sm text-secondary mb-1">종류</label>
-                            <button onclick="domManager.openGradeModalForCard(${cardId})" class="input-field w-full text-left h-[42px]"><span id="grade-display-${cardId}">종류 선택</span></button>
-                            <input type="hidden" id="grade-${cardId}" value="">
-                        </div>
-                        <div>
                             <label class="block text-sm text-secondary mb-1">팀</label>
                             <button onclick="domManager.openTeamModalForCard(${cardId})" class="input-field w-full text-left h-[42px]"><span id="team-display-${cardId}">팀 선택</span></button>
                             <input type="hidden" id="team-${cardId}" value="">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-secondary mb-1">종류</label>
+                            <button onclick="domManager.openGradeModalForCard(${cardId})" class="input-field w-full text-left h-[42px]"><span id="grade-display-${cardId}">종류 선택</span></button>
+                            <input type="hidden" id="grade-${cardId}" value="">
                         </div>
                         <div id="star-rating-container-${cardId}"><label class="block text-sm text-secondary mb-1">등급</label><select id="star-rating-${cardId}" class="input-field w-full"></select></div>
                         <div>
@@ -425,22 +435,13 @@ class DOMManager {
                             <button onclick="domManager.openPositionModalForCard(${cardId})" class="input-field w-full text-left h-[42px]"><span id="position-display-${cardId}">포지션 선택</span></button>
                             <input type="hidden" id="position-${cardId}" value="">
                         </div>
-                        <div class="col-span-2">
-                            <label class="block text-sm text-secondary mb-1">타순</label>
-                            <div id="batting-order-selector-${cardId}" class="grid grid-cols-3 gap-2">
-                                <button type="button" class="enhancement-btn" data-order="상위" onclick="setBattingOrder(${cardId}, '상위')">상위</button>
-                                <button type="button" class="enhancement-btn" data-order="중심" onclick="setBattingOrder(${cardId}, '중심')">중심</button>
-                                <button type="button" class="enhancement-btn" data-order="하위" onclick="setBattingOrder(${cardId}, '하위')">하위</button>
-                            </div>
-                            <input type="hidden" id="batting-order-${cardId}" value="">
-                        </div>
+                        ${battingOrderHTML}
                     </div>
                 </div>
 
                 <div class="mb-6">
                     <h4 class="text-lg font-medium mb-3">기본 능력치</h4>
-                    <div id="batter-stats-${cardId}" class="grid grid-cols-2 gap-3">` + generateStatInputs(cardId, ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'], ['파워', '정확', '선구', '주루', '인내', '수비']) + `</div>
-                    <div id="pitcher-stats-${cardId}" class="grid grid-cols-2 gap-3 hidden">` + generateStatInputs(cardId, ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'], ['구속', '제구', '구위', '변화', '지구력', '수비']) + `</div>
+                    <div id="base-stats-${cardId}" class="grid grid-cols-2 gap-3">` + generateStatInputs(cardId, statKeys, statLabels) + `</div>
                 </div>
 
                 <fieldset id="growth-factors-${cardId}" disabled>
@@ -459,8 +460,7 @@ class DOMManager {
                                     <span>남은: <span id="remaining-points-${cardId}">0</span></span>
                                 </div>
                             </div>
-                            <div id="training-batter-${cardId}" class="grid grid-cols-2 gap-3">` + generateStatInputs(cardId, ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'], ['파워', '정확', '선구', '주루', '인내', '수비'], 'training-') + `</div>
-                            <div id="training-pitcher-${cardId}" class="grid grid-cols-2 gap-3 hidden">` + generateStatInputs(cardId, ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'], ['구속', '제구', '구위', '변화', '지구력', '수비'], 'training-') + `</div>
+                            <div id="training-stats-${cardId}" class="grid grid-cols-2 gap-3">` + generateStatInputs(cardId, statKeys, statLabels, 'training-') + `</div>
                         </div>
                     </div>
                 </fieldset>
@@ -499,22 +499,22 @@ class DOMManager {
     updateComparisonTable() {
         const activeCards = cardCalculator.getActiveCards();
         const tableBody = document.getElementById('comparison-table-body');
-        let html = '';
-        const hasPitcher = activeCards.some(card => ['선발투수', '불펜투수'].includes(card.playerInfo.position));
-        let statHeaders = hasPitcher ? ['구속', '제구', '구위', '변화', '지구력', '수비'] : ['파워', '정확', '선구', '주루', '인내', '수비'];
-        
         const tableHeadRow = document.getElementById('comparison-table-head-row');
+        
+        const isPitcher = this.simulatorType === 'pitcher';
+        const statHeaders = isPitcher ? PITCHER_STAT_LABELS : BATTER_STAT_LABELS;
+        const statKeys = isPitcher ? PITCHER_STATS : BATTER_STATS;
+
         if (tableHeadRow) {
             tableHeadRow.innerHTML = `<th class="py-3 px-4">카드</th>` +
                                      statHeaders.map(header => `<th class="py-3 px-4">${header}</th>`).join('') +
                                      `<th class="py-3 px-4">OVR</th>`;
         }
 
+        let html = '';
         activeCards.forEach(card => {
-            const isPitcher = ['선발투수', '불펜투수'].includes(card.playerInfo.position);
-            const stats = isPitcher ? ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'] : ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'];
             html += `<tr class="border-b border-gray-600"><td class="py-3 px-4 font-semibold">${card.playerInfo.name || `카드 ${card.id}`}</td>`;
-            stats.forEach(stat => {
+            statKeys.forEach(stat => {
                 const value = card.finalStats[stat] || 0;
                 html += `<td class="py-3 px-4">${value.toFixed(1)}</td>`;
             });
@@ -591,7 +591,9 @@ class DOMManager {
     populatePositionButtons() {
         const container = document.getElementById('position-buttons-container');
         container.innerHTML = '';
-        Object.entries(POSITIONS).forEach(([value, label]) => {
+        const positions = this.simulatorType === 'pitcher' ? POSITIONS.pitcher : POSITIONS.batter;
+
+        Object.entries(positions).forEach(([value, label]) => {
             const button = document.createElement('button');
             button.textContent = label;
             button.classList.add('btn-secondary', 'text-sm', 'px-3', 'py-1');
@@ -600,7 +602,7 @@ class DOMManager {
                 if (targetCardId !== null) {
                     document.getElementById(`position-display-${targetCardId}`).textContent = label;
                     document.getElementById(`position-${targetCardId}`).value = value;
-                    this.togglePositionStats(targetCardId);
+                    this.updateCardData(targetCardId);
                 }
                 this.closeModal('position-selection-modal');
             });

@@ -3,13 +3,23 @@
 
 // 포지션 그룹 정의
 const POSITIONS = {
-    '내야수': '내야수',
-    '외야수': '외야수',
-    '포수': '포수',
-    '지명타자': '지명타자',
-    '선발투수': '선발투수',
-    '불펜투수': '불펜투수'
+    batter: {
+        '내야수': '내야수',
+        '외야수': '외야수',
+        '포수': '포수',
+        '지명타자': '지명타자'
+    },
+    pitcher: {
+        '선발투수': '선발투수',
+        '불펜투수': '불펜투수'
+    }
 };
+
+const BATTER_STATS = ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'];
+const BATTER_STAT_LABELS = ['파워', '정확', '선구', '주루', '인내', '수비'];
+const PITCHER_STATS = ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'];
+const PITCHER_STAT_LABELS = ['구속', '제구', '구위', '변화', '지구력', '수비'];
+
 
 // 강화 보너스 테이블 (등급별, 강화단계별)
 // 타자 스탯 배열 순서: [파워, 정확, 선구, 주루, 인내, 수비]

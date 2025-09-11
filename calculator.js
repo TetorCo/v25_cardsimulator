@@ -19,10 +19,8 @@ class CardCalculator {
     }
 
     calculateFinalStats(cardData) {
-        const isPitcher = ['선발투수', '불펜투수'].includes(cardData.playerInfo.position);
-        const stats = isPitcher ? 
-            ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'] : 
-            ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'];
+        const isPitcher = domManager.simulatorType === 'pitcher';
+        const stats = isPitcher ? PITCHER_STATS : BATTER_STATS;
 
         const finalStats = {};
         const setDeckState = domManager.getSetDeckState();
@@ -62,6 +60,8 @@ class CardCalculator {
         let bonus = 0;
         const { playerInfo } = cardData;
         const { selectedSetDeckOptions } = setDeckState;
+        const isPitcher = domManager.simulatorType === 'pitcher';
+        const isBatter = !isPitcher;
 
         for (const score in selectedSetDeckOptions) {
             const selection = selectedSetDeckOptions[score];
@@ -74,8 +74,6 @@ class CardCalculator {
             if (!selectedOption || !selectedOption.bonus) continue;
 
             let applyBonus = false;
-            const isBatter = !['선발투수', '불펜투수'].includes(playerInfo.position);
-            const isPitcher = ['선발투수', '불펜투수'].includes(playerInfo.position);
             const optionType = selectedOption.type;
 
             if (optionType === 'team') {

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>컴투스프로야구V25 카드 성장 시뮬레이터</title>
+    <!-- Tailwind CSS CDN with fallback -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind CSS fallback for offline use
+        if (typeof tailwind === 'undefined') {
+            console.warn('Tailwind CSS failed to load from CDN');
+        }
+    </script>
+    
+    <!-- Chart.js CDN with fallback -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Chart.js fallback for offline use
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js failed to load from CDN');
+            document.addEventListener('DOMContentLoaded', function() {
+                const chartContainer = document.getElementById('comparison-chart');
+                if (chartContainer) {
+                    chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-center"><div><p class="text-red-400 mb-2">Chart.js 로딩 실패</p><p class="text-sm text-gray-400">인터넷 연결을 확인해주세요</p></div></div>';
+                }
+            });
+        }
+    </script>
+    
+    <!-- Google Fonts with fallback -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Font fallback */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    </style>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #1A1A2E;
+            color: #FFFFFF;
+        }
+        .card-bg {
+            background-color: #2A2A4E;
+        }
+        .accent-gold {
+            color: #F9B233;
+        }
+        .accent-blue {
+            color: #33A5F9;
+        }
+        .text-secondary {
+            color: #A0A0B5;
+        }
+        .slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #444;
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #F9B233;
+            cursor: pointer;
+        }
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #F9B233;
+            cursor: pointer;
+            border: none;
+        }
+        .input-field {
+            background-color: #2A2A4E;
+            border: 1px solid #444;
+            color: #FFFFFF;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #F9B233;
+        }
+        .btn-primary {
+            background-color: #F9B233;
+            color: #1A1A2E;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #E0A02A;
+        }
+        .btn-secondary {
+            background-color: transparent;
+            color: #FFFFFF;
+            border: 1px solid #FFFFFF;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #FFFFFF;
+            color: #1A1A2E;
+        }
+        .btn-secondary.active {
+            background-color: #F9B233;
+            color: #1A1A2E;
+            border-color: #F9B233;
+        }
+        .enhancement-btn {
+            background-color: #2A2A4E;
+            color: #FFFFFF;
+            border: 1px solid #444;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .enhancement-btn:hover {
+            background-color: #444;
+            border-color: #F9B233;
+        }
+        .enhancement-btn.active {
+            background-color: #F9B233;
+            color: #1A1A2E;
+            border-color: #F9B233;
+        }
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #2A2A4E;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            color: #FFFFFF;
+        }
+        .modal-content button {
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #F9B233;
+            color: #1A1A2E;
+            border: none;
+            transition: background-color 0.2s;
+        }
+        .modal-content button:hover {
+            background-color: #E0A02A;
+        }
+        .modal-content .btn-secondary {
+            background-color: transparent;
+            color: #FFFFFF;
+            border: 1px solid #FFFFFF;
+        }
+        .modal-content .btn-secondary:hover {
+            background-color: #FFFFFF;
+            color: #1A1A2E;
+        }
+        .modal-content .btn-secondary.active {
+            background-color: #F9B233;
+            color: #1A1A2E;
+            border-color: #F9B233;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-2A2A4E py-4 px-6 border-b border-gray-600">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <h1 class="text-2xl font-bold accent-gold">컴투스프로야구V25 카드 성장 시뮬레이터</h1>
+            <nav class="hidden md:flex space-x-6">
+                <a href="#" class="text-secondary hover:text-white transition-colors">가이드</a>
+                <a href="#" class="text-secondary hover:text-white transition-colors">커뮤니티</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Simulator Section -->
+        <section id="simulator-section" class="mb-12">
+            <div class="flex justify-center items-center mb-8 gap-4">
+                <h2 id="simulator-mode-title" class="text-3xl font-bold">타자 시뮬레이터</h2>
+                <button id="open-setdeck-modal-btn" class="btn-secondary">세트덱 설정</button>
+            </div>
+
+            <!-- Card Slots Container -->
+            <div id="card-slots-container" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+                <!-- Card Slot 1 will be dynamically loaded by JavaScript -->
+            </div>
+
+            <!-- Add Card Button -->
+            <div class="text-center">
+                <button id="add-card-btn" onclick="addCard()" class="btn-primary">
+                    + 카드 추가 (최대 3장)
+                </button>
+            </div>
+        </section>
+
+        <!-- Comparison Section -->
+        <section id="comparison-section" class="hidden">
+            <h2 class="text-3xl font-bold mb-8 text-center">시뮬레이션 결과 비교</h2>
+
+            <!-- Comparison Table -->
+            <div class="card-bg rounded-lg p-6 mb-8">
+                <h3 class="text-xl font-semibold mb-4">비교 테이블</h3>
+                <div class="overflow-x-auto">
+                    <table id="comparison-table" class="w-full text-center">
+                        <thead>
+                            <tr id="comparison-table-head-row" class="border-b border-gray-600">
+                                <th class="py-3 px-4">카드</th>
+                                <th class="py-3 px-4">파워</th>
+                                <th class="py-3 px-4">정확</th>
+                                <th class="py-3 px-4">선구</th>
+                                <th class="py-3 px-4">주루</th>
+                                <th class="py-3 px-4">인내</th>
+                                <th class="py-3 px-4">수비</th>
+                                <th class="py-3 px-4">OVR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparison-table-body">
+                            <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Comparison Chart -->
+            <div class="card-bg rounded-lg p-6">
+                <h3 class="text-xl font-semibold mb-4">능력치 분포 비교</h3>
+                <div class="relative h-80">
+                    <canvas id="comparison-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        
+        <!-- Modals -->
+        <!-- Set Deck Settings Modal -->
+        <div id="set-deck-settings-modal" class="modal hidden">
+            <div class="modal-content" style="max-width: 1100px;">
+                <h3 class="text-2xl font-semibold mb-6">세트덱 설정</h3>
+                <div id="setdeck-options-container" class="overflow-y-auto" style="max-height: 70vh;">
+                    <!-- Set deck options will be populated here by JavaScript -->
+                </div>
+                <div class="text-right mt-6">
+                    <button class="btn-primary" onclick="domManager.closeModal('set-deck-settings-modal')">닫기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Set Deck Score Modal -->
+        <div id="set-deck-score-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4">세트덱 스코어 설정</h3>
+                <div class="mb-4">
+                    <label for="set-deck-score-input" class="block text-sm text-secondary mb-1">세트덱 스코어 입력</label>
+                    <input type="number" id="set-deck-score-input" class="input-field w-full" value="0" min="0">
+                </div>
+                <button class="btn-primary mt-4" onclick="domManager.updateSetDeckScore()">적용</button>
+                <button class="btn-secondary mt-4" onclick="domManager.closeModal('set-deck-score-modal')">닫기</button>
+            </div>
+        </div>
+
+        <!-- Team Selection Modal -->
+        <div id="team-selection-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4">팀 선택</h3>
+                <div id="team-buttons-container" class="grid grid-cols-5 gap-2">
+                    <!-- Team buttons will be dynamically loaded here -->
+                </div>
+                <button class="btn-primary mt-4" onclick="domManager.closeModal('team-selection-modal')">닫기</button>
+            </div>
+        </div>
+
+        <!-- Year Selection Modal -->
+        <div id="year-selection-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4">연도 선택</h3>
+                <div id="year-buttons-container" class="grid grid-cols-5 gap-2">
+                    <!-- Year buttons will be dynamically loaded here -->
+                </div>
+                <button class="btn-primary mt-4" onclick="domManager.closeModal('year-selection-modal')">닫기</button>
+            </div>
+        </div>
+
+        <!-- Grade Selection Modal -->
+        <div id="grade-selection-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4">종류 선택</h3>
+                <div id="grade-buttons-container" class="grid grid-cols-3 gap-2">
+                    <!-- Grade buttons will be dynamically loaded here -->
+                </div>
+                <button class="btn-primary mt-4" onclick="domManager.closeModal('grade-selection-modal')">닫기</button>
+            </div>
+        </div>
+
+        <!-- Position Selection Modal -->
+        <div id="position-selection-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4">포지션 선택</h3>
+                <div id="position-buttons-container" class="grid grid-cols-3 gap-2">
+                    <!-- Position buttons will be dynamically loaded here -->
+                </div>
+                <button class="btn-primary mt-4" onclick="domManager.closeModal('position-selection-modal')">닫기</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-2A2A4E py-6 px-6 border-t border-gray-600 mt-12">
+        <div class="max-w-7xl mx-auto text-center text-secondary">
+            <p>&copy; 2025 컴투스프로야구V25 카드 성장 시뮬레이터. 팬이 제작한 툴입니다.</p>
+            <p class="mt-2 text-sm">본 서비스는 팬이 제작한 툴이며, 실제 게임 내 수치와 약간의 오차가 있을 수 있습니다.</p>
+        </div>
+    </footer>
+
+    <!-- Script Includes -->
+    <script src="constants.js"></script>
+    <script src="calculator.js"></script>
+    <script src="domManager.js"></script>
+    <script src="chartManager.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
