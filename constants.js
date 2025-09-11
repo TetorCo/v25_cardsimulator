@@ -15,14 +15,14 @@ const POSITIONS = {
     }
 };
 
-const BATTER_STATS = ['power', 'contact', 'discipline', 'speed', 'patience', 'fielding'];
-const BATTER_STAT_LABELS = ['파워', '정확', '선구', '주루', '인내', '수비'];
+const BATTER_STATS = ['power', 'contact', 'discipline', 'patience', 'speed', 'fielding'];
+const BATTER_STAT_LABELS = ['파워', '정확', '선구', '인내', '주루', '수비'];
 const PITCHER_STATS = ['velocity', 'control', 'movement', 'breaking', 'stamina', 'fielding'];
 const PITCHER_STAT_LABELS = ['구속', '제구', '구위', '변화', '지구력', '수비'];
 
 
 // 강화 보너스 테이블 (등급별, 강화단계별)
-// 타자 스탯 배열 순서: [파워, 정확, 선구, 주루, 인내, 수비]
+// 타자 스탯 배열 순서: [파워, 정확, 선구, 인내, 주루, 수비]
 // 투수 스탯 배열 순서: [구속, 제구, 구위, 변화, 지구력, 수비]
 const ENHANCEMENT_BONUSES_BY_GRADE = {
     '임팩트': [
@@ -639,6 +639,19 @@ const SET_DECK_TIERS = {
 
 // 팀 목록
 const TEAMS = ['키움', 'LG', '두산', '한화', '삼성', '롯데', 'NC', 'KT', 'SSG', 'KIA'];
+
+const TEAM_LOGOS = {
+    '키움': 'kiwoom.png',
+    'LG': 'lg.png',
+    '두산': 'doosan.png',
+    '한화': 'HH.png',
+    '삼성': 'samsung.png',
+    '롯데': 'LT.png',
+    'NC': 'nc.png',
+    'KT': 'kt.png',
+    'SSG': 'ssg.png',
+    'KIA': 'kia.png'
+};
 
 // 연도 목록 (1982년부터 2025년까지)
 const YEARS = Array.from({ length: 2025 - 1982 + 1 }, (_, i) => (1982 + i).toString());

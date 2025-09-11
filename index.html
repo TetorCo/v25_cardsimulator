@@ -57,14 +57,28 @@
         .logo-track {
             display: flex;
             animation: 40s scroll infinite linear;
-            /* Calculate width based on number of logos and their size */
-            width: calc(20 * 160px); /* 10 logos * 2 sets, 160px per logo approx */
+            width: calc(20 * 160px); 
         }
 
         .logo-track img {
             height: 60px;
             margin: 0 40px;
-            flex-shrink: 0; /* Prevent images from shrinking */
+            flex-shrink: 0;
+        }
+
+        /* Split Text Animation */
+        #animated-title span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: split-text-animation 0.5s forwards;
+        }
+
+        @keyframes split-text-animation {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
     </style>
@@ -102,7 +116,7 @@
     <!-- Main Content -->
     <main class="flex-grow max-w-4xl mx-auto px-6 py-16 flex items-center">
         <div class="text-center w-full">
-            <h2 class="text-4xl font-bold mb-4">컴투스 프로야구 V25 카드 성장 시뮬레이터</h2>
+            <h2 id="animated-title" class="text-4xl font-bold mb-4">컴투스 프로야구 V25 카드 성장 시뮬레이터</h2>
             <p class="text-secondary text-lg mb-12">시뮬레이션하고 싶은 선수 유형을 선택해주세요.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <a href="simulator.html?type=batter" class="btn-primary">
@@ -143,5 +157,26 @@
             </div>
         </div>
     </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const title = document.getElementById('animated-title');
+            const text = title.textContent;
+            title.textContent = '';
+
+            text.split('').forEach((char, index) => {
+                const span = document.createElement('span');
+                span.textContent = char;
+                // Add a delay to each character's animation
+                span.style.animationDelay = `${index * 0.05}s`;
+                // Preserve spaces
+                if(char === ' ') {
+                    span.style.margin = '0 0.25em';
+                }
+                title.appendChild(span);
+            });
+        });
+    </script>
+
 </body>
 </html>

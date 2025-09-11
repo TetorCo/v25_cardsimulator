@@ -75,17 +75,18 @@ class CardCalculator {
 
             let applyBonus = false;
             const optionType = selectedOption.type;
+            const isImpactCard = playerInfo.grade === '임팩트';
 
             if (optionType === 'team') {
                 if (selection.team && playerInfo.team === selection.team) {
                     applyBonus = true;
                 }
             } else if (optionType === 'year') {
-                if (selection.year && playerInfo.year === selection.year) {
+                if (selection.year && (isImpactCard || playerInfo.year === selection.year)) {
                     applyBonus = true;
                 }
             } else if (optionType === 'year_and_position') {
-                if (selection.year && playerInfo.year === selection.year) {
+                if (selection.year && (isImpactCard || playerInfo.year === selection.year)) {
                     if (selectedOption.condition.position === 'batter' && isBatter) applyBonus = true;
                     if (selectedOption.condition.position === 'pitcher' && isPitcher) applyBonus = true;
                 }

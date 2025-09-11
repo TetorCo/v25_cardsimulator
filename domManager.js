@@ -195,12 +195,12 @@ class DOMManager {
             input.addEventListener('input', () => this.updateCardData(cardId));
         });
 
-        const baseStatInputs = document.querySelectorAll(`#batter-stats-${cardId} input, #pitcher-stats-${cardId} input`);
+        const baseStatInputs = document.querySelectorAll(`#base-stats-${cardId} input`);
         baseStatInputs.forEach(input => {
             input.addEventListener('input', () => this.updateCardData(cardId));
         });
 
-        const trainingInputs = document.querySelectorAll(`#training-batter-${cardId} input, #training-pitcher-${cardId} input`);
+        const trainingInputs = document.querySelectorAll(`#training-stats-${cardId} input`);
         trainingInputs.forEach(input => {
             input.addEventListener('input', () => this.updateCardData(cardId));
         });
@@ -209,6 +209,21 @@ class DOMManager {
     handleGradeChange(cardId) {
         const grade = document.getElementById(`grade-${cardId}`).value;
         const starSelect = document.getElementById(`star-rating-${cardId}`);
+        const yearButton = document.querySelector(`button[onclick="domManager.openYearModalForCard(${cardId})"]`);
+        const yearDisplay = document.getElementById(`year-display-${cardId}`);
+        const yearInput = document.getElementById(`year-${cardId}`);
+
+        // Disable/Enable Year Selection based on Grade
+        if (grade === '임팩트') {
+            yearButton.disabled = true;
+            yearDisplay.textContent = '연도 무관';
+            yearInput.value = ''; // Clear the year value
+        } else {
+            yearButton.disabled = false;
+            if (!yearInput.value) {
+                yearDisplay.textContent = '연도 선택';
+            }
+        }
 
         starSelect.innerHTML = '';
         starSelect.disabled = true;
@@ -255,7 +270,7 @@ class DOMManager {
 
         document.getElementById(`max-points-${cardId}`).textContent = maxPoints;
 
-        const trainingInputs = document.querySelectorAll(`#training-batter-${cardId} input, #training-pitcher-${cardId} input`);
+        const trainingInputs = document.querySelectorAll(`#training-stats-${cardId} input`);
         let currentSum = 0;
         trainingInputs.forEach(input => {
             input.setAttribute('max', maxPoints);
@@ -498,6 +513,8 @@ class DOMManager {
 
     updateComparisonTable() {
         const activeCards = cardCalculator.getActiveCards();
+        if (activeCards.length < 1) return;
+
         const tableBody = document.getElementById('comparison-table-body');
         const tableHeadRow = document.getElementById('comparison-table-head-row');
         
@@ -505,20 +522,32 @@ class DOMManager {
         const statHeaders = isPitcher ? PITCHER_STAT_LABELS : BATTER_STAT_LABELS;
         const statKeys = isPitcher ? PITCHER_STATS : BATTER_STATS;
 
+        // Find max values for each stat
+        const maxStats = {};
+        statKeys.forEach(stat => {
+            maxStats[stat] = Math.max(...activeCards.map(card => card.finalStats[stat] || 0));
+        });
+        maxStats.ovr = Math.max(...activeCards.map(card => card.finalStats.ovr || 0));
+
+        // Update table headers
         if (tableHeadRow) {
             tableHeadRow.innerHTML = `<th class="py-3 px-4">카드</th>` +
                                      statHeaders.map(header => `<th class="py-3 px-4">${header}</th>`).join('') +
                                      `<th class="py-3 px-4">OVR</th>`;
         }
 
+        // Update table body
         let html = '';
         activeCards.forEach(card => {
             html += `<tr class="border-b border-gray-600"><td class="py-3 px-4 font-semibold">${card.playerInfo.name || `카드 ${card.id}`}</td>`;
             statKeys.forEach(stat => {
                 const value = card.finalStats[stat] || 0;
-                html += `<td class="py-3 px-4">${value.toFixed(1)}</td>`;
+                const isBest = value === maxStats[stat] && activeCards.length > 1;
+                html += `<td class="py-3 px-4 ${isBest ? 'best-stat' : ''}">${value.toFixed(1)}</td>`;
             });
-            html += `<td class="py-3 px-4">${card.finalStats.ovr ? card.finalStats.ovr.toFixed(1) : 'N/A'}</td>`;
+            const ovr = card.finalStats.ovr || 0;
+            const isBestOvr = ovr === maxStats.ovr && activeCards.length > 1;
+            html += `<td class="py-3 px-4 ${isBestOvr ? 'best-stat' : ''}">${ovr.toFixed(1)}</td>`;
             html += `</tr>`;
         });
         tableBody.innerHTML = html;
@@ -540,10 +569,15 @@ class DOMManager {
             select.selectedIndex = 0;
         });
 
-        document.getElementById(`team-display-${cardId}`).textContent = '팀 선택';
+        const teamDisplay = document.getElementById(`team-display-${cardId}`);
+        if (teamDisplay) {
+            teamDisplay.innerHTML = '팀 선택';
+        }
         document.getElementById(`team-${cardId}`).value = '';
         document.getElementById(`year-display-${cardId}`).textContent = '연도 선택';
         document.getElementById(`year-${cardId}`).value = '';
+        const yearButton = document.querySelector(`button[onclick="domManager.openYearModalForCard(${cardId})"]`);
+        if(yearButton) yearButton.disabled = false;
         document.getElementById(`grade-display-${cardId}`).textContent = '종류 선택';
         document.getElementById(`grade-${cardId}`).value = '';
         document.getElementById(`position-display-${cardId}`).textContent = '포지션 선택';
@@ -614,13 +648,19 @@ class DOMManager {
         const container = document.getElementById('team-buttons-container');
         container.innerHTML = '';
         TEAMS.forEach(team => {
-            const button = document.createElement('button');
-            button.textContent = team;
-            button.classList.add('btn-secondary', 'text-sm', 'px-3', 'py-1');
-            button.addEventListener('click', () => {
+            const logoFileName = TEAM_LOGOS[team];
+            if (!logoFileName) return;
+
+            const img = document.createElement('img');
+            img.src = `team_logo/${logoFileName}`;
+            img.alt = team;
+            img.classList.add('w-16', 'h-16', 'object-contain', 'cursor-pointer', 'p-2', 'rounded-lg', 'hover:bg-gray-700', 'transition-colors');
+            
+            img.addEventListener('click', () => {
                 const cardId = this.activeModalTargetCardId;
                 if (cardId !== null) {
-                    document.getElementById(`team-display-${cardId}`).textContent = team;
+                    const displaySpan = document.getElementById(`team-display-${cardId}`);
+                    displaySpan.innerHTML = `<img src="team_logo/${logoFileName}" alt="${team}" class="h-8 w-8 object-contain inline-block">`;
                     document.getElementById(`team-${cardId}`).value = team;
                     this.updateCardData(cardId);
                     this.activeModalTargetCardId = null; 
@@ -631,7 +671,7 @@ class DOMManager {
                 }
                 this.closeModal('team-selection-modal');
             });
-            container.appendChild(button);
+            container.appendChild(img);
         });
     }
 
